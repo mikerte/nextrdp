@@ -69,6 +69,7 @@ if ($sampleInventoryRaw -match '(?i)"(?:password|passwd|pwd|access[_-]?token|cli
 
 dotnet build (Join-Path $root 'NextRdp.slnx') --configuration $Configuration
 if ($LASTEXITCODE -ne 0) { throw "Build failed with exit code $LASTEXITCODE." }
+& (Join-Path $PSScriptRoot 'test-brand-assets.ps1') -ExecutablePath (Join-Path $root "src\NextRdp.Desktop\bin\$Configuration\net10.0-windows\NextRdp.Desktop.exe")
 dotnet format (Join-Path $root 'NextRdp.slnx') --verify-no-changes --no-restore --verbosity minimal
 if ($LASTEXITCODE -ne 0) { throw "Formatting verification failed with exit code $LASTEXITCODE." }
 dotnet test (Join-Path $root 'NextRdp.slnx') --configuration $Configuration --no-build
