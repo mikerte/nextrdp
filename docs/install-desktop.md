@@ -53,14 +53,16 @@ The script:
 3. Creates a local development signing certificate under ignored `artifacts\msix\`.
 4. Signs and verifies the package and writes hashes.
 
-Packaging does not install the application and does not modify certificate trust. On an elevated, disposable Windows 11 x64 test account, run:
+Packaging does not install the application and does not modify certificate trust. On Windows 11 x64, run:
 
 ```powershell
 .\scripts\test-msix-install.ps1 -PreflightOnly
-.\scripts\test-msix-install.ps1
+.\scripts\invoke-msix-acceptance.ps1 -Mode Install
 ```
 
-The full test temporarily places only the generated certificate in Local Machine **Trusted People**, installs and launches the package, uninstalls it, and removes the trust entry it created. It intentionally refuses to run against an account that already contains NextRDP application data or an installed NextRDP package.
+The full test temporarily places only the generated certificate in Local Machine **Trusted People**, installs and launches the package, uninstalls it, and removes the trust entry it created. A disposable test account is preferred. The lifecycle script also supports an account that has used the unpackaged application, provided the `NextRDP.Client` package namespace itself is clean.
+
+The runner requests elevation and records its local transcript under ignored `artifacts\acceptance\`. It launches the installed executable against a disposable test-only inventory, hashes the complete `%LOCALAPPDATA%\NextRDP` directory before and after the test, and fails if any existing file or directory changes. It refuses an existing `NextRDP.Client` installation or package-data directory. AppX deployment requires the generated certificate in Local Machine **Trusted People**; the script adds it temporarily and removes it afterward if the test added it.
 
 Never distribute the generated signing key or represent this package as production trusted.
 
@@ -84,29 +86,29 @@ Get-AppxPackage -Name NextRDP.Hackathon | Remove-AppxPackage
 
 Back up any local inventory you need through NextRDP's secret-free inventory export before removing old test data.
 
-Packages that retain the `NextRDP.Client` identity and publisher use the normal MSIX upgrade path. The isolated upgrade test verifies identity and signer continuity, launch before and after upgrade, package-local inventory-data persistence, uninstall, data cleanup, and temporary-trust cleanup:
+Packages that retain the `NextRDP.Client` identity and publisher use the normal MSIX upgrade path. The isolated upgrade test verifies identity and signer continuity, launch before and after upgrade, isolated inventory-data persistence, uninstall, data cleanup, and temporary-trust cleanup:
 
 ```powershell
 .\scripts\test-msix-upgrade.ps1 `
   -PreviousPackagePath 'C:\path\to\previous\NextRDP-x64.msix' `
   -PreflightOnly
 
-# On an elevated, disposable Windows 11 x64 test account:
-.\scripts\test-msix-upgrade.ps1 `
+# Run the machine-backed lifecycle; this requests elevation:
+.\scripts\invoke-msix-acceptance.ps1 -Mode Upgrade `
   -PreviousPackagePath 'C:\path\to\previous\NextRDP-x64.msix'
 ```
 
-The previous and current packages must have the same identity, publisher, architecture, and test signer. The script refuses existing installations and user data.
+The previous and current packages must have the same identity, publisher, architecture, and test signer. The script always refuses existing packaged installations and package data. It uses one disposable inventory for both launches to verify application-data continuity across the package upgrade, then removes that inventory and proves any pre-existing unpackaged inventory was unchanged.
 
 ## Data and uninstall
 
-Unpackaged builds store local data in:
+Both source-built and MSIX-installed clients store the user's inventory in:
 
 ```text
 %LOCALAPPDATA%\NextRDP\
 ```
 
-MSIX builds use the Windows package data directory for `NextRDP.Client`. Uninstall an evaluation package through **Settings → Apps → Installed apps** or:
+This shared location preserves the inventory when moving between unpackaged and installed builds. Uninstalling the application does not delete it. Uninstall an evaluation package through **Settings → Apps → Installed apps** or:
 
 ```powershell
 Get-AppxPackage -Name NextRDP.Client | Remove-AppxPackage
@@ -130,4 +132,4 @@ Use the isolated install script from an elevated, clean Windows 11 x64 account. 
 
 ### Inventory does not appear where expected
 
-Packaged and unpackaged applications use different Windows data locations. Confirm which build is running and use the in-app export rather than copying a live SQLite database.
+Confirm that the application is running under the expected Windows account. Use the in-app export rather than copying a live SQLite database.

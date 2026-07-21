@@ -4,6 +4,7 @@ param()
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot 'release-metadata.ps1')
+. (Join-Path $PSScriptRoot 'package-test-isolation.ps1')
 $release = Get-NextRdpReleaseMetadata -ProjectRoot $root
 
 $testSigner = [pscustomobject]@{ Thumbprint = 'TEST' }
@@ -48,6 +49,32 @@ $stalePackageReferences = @(Get-ChildItem -LiteralPath @(
     Where-Object { $_.Path -notlike '*docs\releases\*' })
 if ($stalePackageReferences.Count -gt 0) {
     throw "A stale hard-coded package path remains at $($stalePackageReferences[0].Path):$($stalePackageReferences[0].LineNumber)."
+}
+
+$fingerprintTestPath = Join-Path ([IO.Path]::GetTempPath()) "nextrdp-fingerprint-$([Guid]::NewGuid().ToString('N'))"
+try {
+    if ((Get-NextRdpDirectoryFingerprint -Path $fingerprintTestPath) -ne 'absent') {
+        throw 'A missing directory must produce the absent fingerprint.'
+    }
+    New-Item -ItemType Directory -Path (Join-Path $fingerprintTestPath 'empty') -Force | Out-Null
+    [IO.File]::WriteAllText((Join-Path $fingerprintTestPath 'inventory.txt'), 'original', [Text.UTF8Encoding]::new($false))
+    $firstFingerprint = Get-NextRdpDirectoryFingerprint -Path $fingerprintTestPath
+    if ((Get-NextRdpDirectoryFingerprint -Path $fingerprintTestPath) -ne $firstFingerprint) {
+        throw 'Directory fingerprints must be deterministic.'
+    }
+    [IO.File]::AppendAllText((Join-Path $fingerprintTestPath 'inventory.txt'), '-changed', [Text.UTF8Encoding]::new($false))
+    if ((Get-NextRdpDirectoryFingerprint -Path $fingerprintTestPath) -eq $firstFingerprint) {
+        throw 'Directory fingerprints must change when file content changes.'
+    }
+    New-Item -ItemType Directory -Path (Join-Path $fingerprintTestPath 'another-empty') | Out-Null
+    $directoryFingerprint = Get-NextRdpDirectoryFingerprint -Path $fingerprintTestPath
+    Remove-Item -LiteralPath (Join-Path $fingerprintTestPath 'another-empty')
+    if ((Get-NextRdpDirectoryFingerprint -Path $fingerprintTestPath) -eq $directoryFingerprint) {
+        throw 'Directory fingerprints must include empty directory structure.'
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $fingerprintTestPath) { Remove-Item -LiteralPath $fingerprintTestPath -Recurse -Force }
 }
 
 Write-Host "Release metadata passed: $($release.ReleaseTag), product $($release.ProductVersion), MSIX $($release.MsixVersion), identity $($release.PackageIdentity)."

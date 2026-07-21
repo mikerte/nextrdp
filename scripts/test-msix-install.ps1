@@ -9,6 +9,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot 'release-metadata.ps1')
+. (Join-Path $PSScriptRoot 'package-test-isolation.ps1')
 $release = Get-NextRdpReleaseMetadata -ProjectRoot $root
 if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $release.MsixVersion }
 . (Join-Path $PSScriptRoot 'phase1-platform.ps1')
@@ -53,18 +54,21 @@ $existingPackage = @(Get-AppxPackage -Name $packageName -ErrorAction SilentlyCon
 if ($existingPackage.Count -gt 0) { throw "A $packageName package is already installed. Use a clean test user or remove it deliberately before running this isolated acceptance test." }
 $unpackagedDataPath = Join-Path $env:LOCALAPPDATA 'NextRDP'
 $packagedDataPaths = @(Get-ChildItem -LiteralPath (Join-Path $env:LOCALAPPDATA 'Packages') -Directory -Filter "$packageName`_*" -ErrorAction SilentlyContinue)
-$hasExistingUserData = (Test-Path -LiteralPath $unpackagedDataPath) -or $packagedDataPaths.Count -gt 0
+$hasUnpackagedData = Test-Path -LiteralPath $unpackagedDataPath -PathType Container
+$unpackagedDataFingerprintBefore = Get-NextRdpDirectoryFingerprint -Path $unpackagedDataPath
+$hasPackagedData = $packagedDataPaths.Count -gt 0
 
 if ($PreflightOnly)
 {
-    Write-Host "MSIX package preflight passed for Windows $($operatingSystem.Version) x64, package $($identity.Name) $($identity.Version) $($identity.ProcessorArchitecture), acceptable evaluation signature $($signature.Status). Elevated execution available: $isAdministrator; clean user data state: $(-not $hasExistingUserData)."
-    if ($hasExistingUserData) { Write-Host 'This account contains existing NextRDP data. The mutating acceptance run will refuse to proceed; use a clean Windows 11 x64 test user.' }
-    if (-not $isAdministrator) { Write-Host 'Run this script from an elevated PowerShell session on the clean Windows 11 x64 test machine to perform install, launch, uninstall, and trust cleanup.' }
+    Write-Host "MSIX package preflight passed for Windows $($operatingSystem.Version) x64, package $($identity.Name) $($identity.Version) $($identity.ProcessorArchitecture), acceptable evaluation signature $($signature.Status). Elevated execution available: $isAdministrator; clean package namespace: $(-not $hasPackagedData); unpackaged data present and fingerprinted: $hasUnpackagedData."
+    if ($hasPackagedData) { Write-Host 'This account contains existing NextRDP.Client package data. The mutating acceptance run will refuse to proceed.' }
+    if (-not $isAdministrator) { Write-Host 'Run this script from an elevated PowerShell session so Windows AppX deployment can validate temporary machine-level Trusted People trust.' }
     return
 }
 
-if (-not $isAdministrator) { throw 'MSIX install acceptance requires an elevated PowerShell session to trust and later remove the development certificate at machine scope.' }
-if ($hasExistingUserData) { throw 'Existing NextRDP user data was found. Use a clean Windows 11 x64 test user; this acceptance script will not modify or remove existing inventory.' }
+if (-not $isAdministrator) { throw 'MSIX install acceptance requires an elevated PowerShell session for temporary machine-level Trusted People trust.' }
+if ($hasPackagedData) { throw 'Existing NextRDP.Client package data was found. Use a clean package namespace; this acceptance script will not modify or remove existing package data.' }
+if (Get-Process -Name 'NextRdp.Desktop' -ErrorAction SilentlyContinue) { throw 'Close all running NextRDP processes before package acceptance.' }
 
 $stores = @('Cert:\LocalMachine\TrustedPeople')
 $storesAddedByTest = [Collections.Generic.List[string]]::new()
@@ -73,11 +77,19 @@ $launchedProcess = $null
 $testPackagedDataPath = $null
 $acceptanceDirectory = Join-Path $root 'artifacts\acceptance'
 $installEvidencePath = Join-Path $acceptanceDirectory 'msix-install-smoke.json'
+$isolatedDataPath = Join-Path $acceptanceDirectory "msix-install-data-$([Guid]::NewGuid().ToString('N'))"
+$resolvedAcceptanceRoot = [IO.Path]::GetFullPath($acceptanceDirectory).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+$resolvedIsolatedDataPath = [IO.Path]::GetFullPath($isolatedDataPath)
+if (-not $resolvedIsolatedDataPath.StartsWith($resolvedAcceptanceRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'The isolated MSIX data path must remain under the acceptance artifact directory.' }
+$testDataEnvironmentVariable = 'NEXTRDP_TEST_DATA_DIRECTORY'
+$previousTestDataPath = [Environment]::GetEnvironmentVariable($testDataEnvironmentVariable, [EnvironmentVariableTarget]::Process)
+$isolatedDatabaseCreated = $false
 $manualWindowStartedAt = $null
 $manualWindowEndedAt = $null
 $manualWindowSeconds = $null
 
 New-Item -ItemType Directory -Path $acceptanceDirectory -Force | Out-Null
+New-Item -ItemType Directory -Path $resolvedIsolatedDataPath -Force | Out-Null
 if (Test-Path -LiteralPath $installEvidencePath) { Remove-Item -LiteralPath $installEvidencePath -Force }
 
 try
@@ -91,26 +103,30 @@ try
         }
     }
 
+    $signature = Get-AuthenticodeSignature -LiteralPath $packagePath
+    if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Thumbprint -ne $certificate.Thumbprint) {
+        throw 'The MSIX signature did not become valid after applying temporary machine-level trust.'
+    }
+
     Add-AppxPackage -Path $packagePath -ForceUpdateFromAnyVersion
     $installedPackage = Get-AppxPackage -Name $packageName -ErrorAction Stop
     $testPackagedDataPath = Join-Path (Join-Path $env:LOCALAPPDATA 'Packages') $installedPackage.PackageFamilyName
     $installedExecutable = Join-Path $installedPackage.InstallLocation 'NextRdp.Desktop.exe'
     if (-not (Test-Path -LiteralPath $installedExecutable)) { throw 'The installed package does not contain NextRdp.Desktop.exe.' }
 
-    $launchStartedAt = Get-Date
-    $applicationUserModelId = "$($installedPackage.PackageFamilyName)!App"
-    Start-Process -FilePath 'explorer.exe' -ArgumentList "shell:AppsFolder\$applicationUserModelId"
-    for ($attempt = 0; $attempt -lt 15; $attempt++)
+    [Environment]::SetEnvironmentVariable($testDataEnvironmentVariable, $resolvedIsolatedDataPath, [EnvironmentVariableTarget]::Process)
+    try { $launchedProcess = Start-Process -FilePath $installedExecutable -PassThru }
+    finally { [Environment]::SetEnvironmentVariable($testDataEnvironmentVariable, $previousTestDataPath, [EnvironmentVariableTarget]::Process) }
+    for ($attempt = 0; $attempt -lt 60; $attempt++)
     {
         Start-Sleep -Milliseconds 500
-        $launchedProcess = Get-Process -Name 'NextRdp.Desktop' -ErrorAction SilentlyContinue |
-            Where-Object { $_.StartTime -ge $launchStartedAt } |
-            Sort-Object StartTime -Descending |
-            Select-Object -First 1
-        if ($null -ne $launchedProcess -and $launchedProcess.MainWindowHandle -ne 0) { break }
+        $launchedProcess.Refresh()
+        if ($launchedProcess.MainWindowHandle -ne 0 -and $launchedProcess.Responding) { break }
     }
-    if ($null -eq $launchedProcess -or $launchedProcess.MainWindowHandle -eq 0) { throw 'The installed NextRDP package did not expose a desktop window.' }
-    if (-not $launchedProcess.Responding) { throw 'The installed NextRDP process is not responding.' }
+    if ($launchedProcess.MainWindowHandle -eq 0) { throw 'The installed NextRDP package did not expose a desktop window within 30 seconds.' }
+    if (-not $launchedProcess.Responding) { throw 'The installed NextRDP process did not become responsive within 30 seconds.' }
+    $isolatedDatabaseCreated = Test-Path -LiteralPath (Join-Path $resolvedIsolatedDataPath 'nextrdp.db') -PathType Leaf
+    if (-not $isolatedDatabaseCreated) { throw 'The installed application did not initialize its isolated acceptance inventory.' }
     if ($ManualAcceptance)
     {
         $manualWindowStartedAt = [DateTimeOffset]::UtcNow
@@ -132,10 +148,11 @@ try
 }
 finally
 {
-    $remainingProcess = Get-Process -Name 'NextRdp.Desktop' -ErrorAction SilentlyContinue |
-        Where-Object { $null -eq $launchedProcess -or $_.Id -eq $launchedProcess.Id } |
-        Select-Object -First 1
-    if ($null -ne $remainingProcess) { $null = $remainingProcess.CloseMainWindow() }
+    [Environment]::SetEnvironmentVariable($testDataEnvironmentVariable, $previousTestDataPath, [EnvironmentVariableTarget]::Process)
+    if ($null -ne $launchedProcess -and -not $launchedProcess.HasExited) {
+        $null = $launchedProcess.CloseMainWindow()
+        if (-not $launchedProcess.WaitForExit(5000)) { Stop-Process -Id $launchedProcess.Id -Force }
+    }
 
     $installedPackages = @(Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue)
     foreach ($package in $installedPackages) { Remove-AppxPackage -Package $package.PackageFullName }
@@ -144,19 +161,35 @@ finally
         $trustedCertificate = Join-Path $store $certificate.Thumbprint
         if (Test-Path -LiteralPath $trustedCertificate) { Remove-Item -LiteralPath $trustedCertificate -Force }
     }
+    $unpackagedDataUntouched = (Get-NextRdpDirectoryFingerprint -Path $unpackagedDataPath) -eq $unpackagedDataFingerprintBefore
+    if (Test-Path -LiteralPath $resolvedIsolatedDataPath) { Remove-Item -LiteralPath $resolvedIsolatedDataPath -Recurse -Force }
+    if (-not $unpackagedDataUntouched) {
+        throw 'The pre-existing unpackaged NextRDP data changed during isolated package acceptance.'
+    }
 }
 
-if (Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue) { throw 'NextRDP remained installed after the uninstall acceptance step.' }
-for ($attempt = 0; $null -ne $testPackagedDataPath -and (Test-Path -LiteralPath $testPackagedDataPath) -and $attempt -lt 10; $attempt++)
+$packageStillInstalled = $true
+$packagedDataStillPresent = $true
+for ($attempt = 0; $attempt -lt 120; $attempt++)
 {
+    $packageStillInstalled = @(Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue).Count -gt 0
+    $packagedDataStillPresent = $null -ne $testPackagedDataPath -and (Test-Path -LiteralPath $testPackagedDataPath)
+    if (-not $packageStillInstalled -and -not $packagedDataStillPresent) { break }
     Start-Sleep -Milliseconds 500
 }
-if ($null -ne $testPackagedDataPath -and (Test-Path -LiteralPath $testPackagedDataPath)) { throw 'NextRDP packaged user data remained after uninstall; do not accept the clean-install result.' }
+if ($packageStillInstalled) { throw 'NextRDP remained installed after the 60-second uninstall cleanup window.' }
+if ($packagedDataStillPresent) { throw 'NextRDP packaged user data remained after the 60-second uninstall cleanup window; do not accept the clean-install result.' }
+if (Test-Path -LiteralPath $resolvedIsolatedDataPath) { throw 'The disposable acceptance inventory remained after cleanup.' }
 $installEvidence = [ordered]@{
     schemaVersion = 2
     completedAtUtc = [DateTimeOffset]::UtcNow.ToString('O')
-    scope = 'NextRDP clean MSIX install and removal acceptance'
+    scope = 'NextRDP clean MSIX package-namespace install and removal acceptance'
     mode = if ($ManualAcceptance) { 'manual-acceptance' } else { 'automated-smoke' }
+    isolation = [ordered]@{
+        mode = 'isolated-test-data'
+        trustScope = 'LocalMachine'
+        preexistingUnpackagedData = if ($hasUnpackagedData) { 'present-and-fingerprinted' } else { 'absent' }
+    }
     platform = [ordered]@{
         product = [string]$operatingSystem.Caption
         version = [string]$operatingSystem.Version
@@ -178,7 +211,9 @@ $installEvidence = [ordered]@{
         manualAcceptanceWindow = if ($ManualAcceptance) { 'pass' } else { 'not-run' }
         uninstall = 'pass'
         packagedUserDataCleanup = 'pass'
+        isolatedTestDataCleanup = 'pass'
         temporaryTrustCleanup = 'pass'
+        unpackagedDataUntouched = if ($hasUnpackagedData) { 'pass' } else { 'not-applicable' }
     }
     manualAcceptance = if ($ManualAcceptance) {
         [ordered]@{
