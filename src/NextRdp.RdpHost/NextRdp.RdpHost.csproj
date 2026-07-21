@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RdpInteropDir>$(MSBuildThisFileDirectory)..\..\artifacts\interop</RdpInteropDir>
+    <AxImpPath Condition="'$(AxImpPath)' == ''">$(MSBuildProgramFiles32)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\AxImp.exe</AxImpPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NextRdp.Core\NextRdp.Core.csproj" />
+    <Reference Include="MSTSCLib" HintPath="$(RdpInteropDir)\MSTSCLib.dll" Private="true" />
+    <Reference Include="AxInterop.MSTSCLib" HintPath="$(RdpInteropDir)\AxInterop.MSTSCLib.dll" Private="true" />
+  </ItemGroup>
+  <Target Name="GenerateRdpInterop" BeforeTargets="ResolveAssemblyReferences" Condition="!Exists('$(RdpInteropDir)\AxInterop.MSTSCLib.dll')">
+    <Error Condition="!Exists('$(AxImpPath)')" Text="AxImp.exe was not found at '$(AxImpPath)'. Install the Visual Studio .NET desktop workload and .NET Framework SDK, or pass -p:AxImpPath=&quot;C:\path\to\AxImp.exe&quot;." />
+    <MakeDir Directories="$(RdpInteropDir)" />
+    <Exec Command="&quot;$(AxImpPath)&quot; &quot;$(WINDIR)\System32\mstscax.dll&quot; /out:&quot;$(RdpInteropDir)\AxInterop.MSTSCLib.dll&quot;" />
+  </Target>
+</Project>

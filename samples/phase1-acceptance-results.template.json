@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "checks": [
+    { "id": "clean-msix-install", "result": "not-run" },
+    { "id": "create-or-import", "result": "not-run" },
+    { "id": "search", "result": "not-run" },
+    { "id": "prompt-only-authentication", "result": "not-run" },
+    { "id": "embedded-tabs", "result": "not-run" },
+    { "id": "sizing-and-live-resize", "result": "not-run" },
+    { "id": "full-screen-exit", "result": "not-run" },
+    { "id": "clipboard-redirection", "result": "not-run" },
+    { "id": "drive-redirection", "result": "not-run" },
+    { "id": "printer-redirection", "result": "not-run" },
+    { "id": "audio-redirection", "result": "not-run" },
+    { "id": "automatic-reconnect", "result": "not-run" },
+    { "id": "clean-disconnect", "result": "not-run" },
+    { "id": "restart-persistence", "result": "not-run" },
+    { "id": "password-absence", "result": "not-run" },
+    { "id": "recent-history", "result": "not-run" },
+    { "id": "production-safety", "result": "not-run" },
+    { "id": "screen-reader", "result": "not-run" },
+    { "id": "touch-and-pen", "result": "not-run" },
+    { "id": "windows-app-certification", "result": "not-run" },
+    { "id": "clean-uninstall", "result": "not-run" }
+  ]
+}

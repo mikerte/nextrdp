@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "exportedAtUtc": "2026-07-18T00:00:00+00:00",
+  "securityNotice": "This export intentionally contains no passwords, password blobs, tokens, or credential references.",
+  "folders": [
+    {
+      "id": "01982f2a-bc00-7000-8000-000000000001",
+      "parentId": null,
+      "name": "Example lab",
+      "sortOrder": 0
+    }
+  ],
+  "connections": [
+    {
+      "id": "01982f2a-bc00-7000-8000-000000000002",
+      "folderId": "01982f2a-bc00-7000-8000-000000000001",
+      "name": "Example lab server",
+      "host": "rdp.example.invalid",
+      "port": 3389,
+      "usernameHint": "EXAMPLE\\operator",
+      "environment": "Lab",
+      "notes": "Secret-free sample metadata only.",
+      "isFavorite": true,
+      "lastConnectedAtUtc": null,
+      "tags": [
+        "example",
+        "lab"
+      ],
+      "settings": {
+        "requireNetworkLevelAuthentication": true,
+        "smartSizing": true,
+        "redirectClipboard": true,
+        "redirectDrives": false,
+        "redirectPrinters": false,
+        "redirectAudio": true,
+        "colorDepth": 32,
+        "reconnectAttempts": 5,
+        "showProductionWatermark": true
+      }
+    }
+  ]
+}

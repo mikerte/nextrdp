@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>NextRdp.Cli</RootNamespace>
+    <AssemblyName>nextrdp</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NextRdp.Platform.Application\NextRdp.Platform.Application.csproj" />
+    <ProjectReference Include="..\NextRdp.Platform.Client\NextRdp.Platform.Client.csproj" />
+  </ItemGroup>
+</Project>

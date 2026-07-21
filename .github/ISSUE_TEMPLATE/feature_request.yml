@@ -1,0 +1,45 @@
+name: Feature request
+description: Propose a focused improvement or new capability.
+title: '[Feature]: '
+labels: ['enhancement', 'needs-triage']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow or limitation should be improved?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the observable result rather than only a technical implementation.
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Windows desktop
+        - RDP host and session behavior
+        - Self-hosted control plane
+        - Administration console
+        - Automation and API
+        - Packaging and deployment
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security, privacy, or compatibility considerations
+      description: Note credentials, permissions, external systems, sensitive metadata, or upgrade impact.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: This request contains no credentials, private target information, tokens, certificates, or production data.
+          required: true

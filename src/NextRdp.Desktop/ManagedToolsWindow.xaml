@@ -1,0 +1,49 @@
+<Window x:Class="NextRdp.Desktop.ManagedToolsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Managed workspace tools" Width="720" Height="620" MinWidth="620" MinHeight="520"
+        WindowStartupLocation="CenterOwner" Background="{DynamicResource AppBackground}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            <TextBlock Text="Managed workspace tools" FontSize="24" FontWeight="SemiBold"/>
+            <TextBlock Text="Templates and copies contain connection metadata only. Windows still prompts separately for RDP credentials." TextWrapping="Wrap" Foreground="{DynamicResource SecondaryText}" Margin="0,6,0,18"/>
+
+            <TextBlock Text="Effective policy for selected connection" FontWeight="SemiBold"/>
+            <TextBlock x:Name="PolicySummary" TextWrapping="Wrap" Margin="0,5,0,18" Foreground="{DynamicResource SecondaryText}"/>
+
+            <TextBlock Text="Create a personal profile from a template" FontWeight="SemiBold"/>
+            <ComboBox x:Name="TemplateBox" ItemsSource="{Binding ManagedTemplates}" DisplayMemberPath="Name" Margin="0,6,0,6" AutomationProperties.Name="Connection template"/>
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,5,0">
+                    <TextBlock Text="Connection name" FontSize="11" Foreground="{DynamicResource SecondaryText}"/>
+                    <TextBox x:Name="NameBox"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                    <TextBlock Text="Host or IP address" FontSize="11" Foreground="{DynamicResource SecondaryText}"/>
+                    <TextBox x:Name="HostBox"/>
+                </StackPanel>
+            </Grid>
+            <Grid Margin="0,6,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,5,0">
+                    <TextBlock Text="Port" FontSize="11" Foreground="{DynamicResource SecondaryText}"/>
+                    <TextBox x:Name="PortBox" Text="3389"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                    <TextBlock Text="Username hint (optional)" FontSize="11" Foreground="{DynamicResource SecondaryText}"/>
+                    <TextBox x:Name="UsernameBox"/>
+                </StackPanel>
+            </Grid>
+            <Button Content="Create from template" Click="CreateTemplate_Click" HorizontalAlignment="Left" Margin="0,9,0,20" Style="{StaticResource AccentButtonStyle}"/>
+
+            <TextBlock Text="Safe copy of selected managed connection" FontWeight="SemiBold"/>
+            <TextBox x:Name="CopyNameBox" Margin="0,6,0,0" AutomationProperties.Name="Copy connection name"/>
+            <Button Content="Create personal copy" Click="Copy_Click" HorizontalAlignment="Left" Margin="0,9,0,20"/>
+
+            <TextBlock Text="Dynamic groups" FontWeight="SemiBold"/>
+            <ListBox ItemsSource="{Binding ManagedDynamicGroups}" DisplayMemberPath="Name" MinHeight="100" Margin="0,6,0,12" AutomationProperties.Name="Managed dynamic groups"/>
+            <Button Content="Close" IsCancel="True" HorizontalAlignment="Right"/>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

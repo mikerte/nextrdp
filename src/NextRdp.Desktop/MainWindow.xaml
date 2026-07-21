@@ -1,0 +1,315 @@
+<Window x:Class="NextRdp.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:NextRdp.Desktop"
+        Title="NextRDP" Icon="Assets/nextrdp.ico" Height="800" Width="1280"
+        MinHeight="480" MinWidth="840" WindowStartupLocation="CenterScreen"
+        PreviewKeyDown="Window_PreviewKeyDown" SizeChanged="Window_SizeChanged">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" MinHeight="30" Background="{DynamicResource TopBarBackground}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
+            <DockPanel Margin="10,0" LastChildFill="True">
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Image Source="Assets/nextrdp-logo.png" Width="20" Height="20" Stretch="Uniform" AutomationProperties.Name="NextRDP logo"/>
+                    <TextBlock Text="NextRDP" FontWeight="SemiBold" FontSize="13" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Menu Background="Transparent" VerticalAlignment="Stretch" AutomationProperties.Name="Application menu">
+                    <MenuItem Header="_File">
+                        <MenuItem Header="_New connection" InputGestureText="Ctrl+N" Click="NewConnection_Click"/>
+                        <Separator Style="{StaticResource MenuSeparatorStyle}"/>
+                        <MenuItem Header="_Import…" Click="Import_Click"/>
+                        <MenuItem Header="_Export inventory…" Click="Export_Click"/>
+                        <MenuItem Header="_Support package…" Click="SupportPackage_Click"/>
+                        <Separator Style="{StaticResource MenuSeparatorStyle}"/>
+                        <MenuItem Header="E_xit" Click="Exit_Click"/>
+                    </MenuItem>
+                    <MenuItem Header="_Connection">
+                        <MenuItem Header="_Connect" InputGestureText="Enter" Click="ConnectSelected_Click" IsEnabled="{Binding CanConnectSelected}"/>
+                        <MenuItem Header="_Edit…" InputGestureText="Ctrl+E" Click="EditConnection_Click" IsEnabled="{Binding CanEditSelected}"/>
+                        <MenuItem Header="Toggle _favorite" InputGestureText="Ctrl+D" Click="ToggleFavorite_Click" IsEnabled="{Binding CanModifySelectedLocal}"/>
+                        <MenuItem Header="_Bulk connect…" Click="BulkConnect_Click"/>
+                        <Separator Style="{StaticResource MenuSeparatorStyle}"/>
+                        <MenuItem Header="_Diagnostics…" Click="Diagnostics_Click" IsEnabled="{Binding HasSelectedConnection}"/>
+                        <MenuItem Header="_Delete…" Click="DeleteConnection_Click" IsEnabled="{Binding CanModifySelectedLocal}"/>
+                    </MenuItem>
+                    <MenuItem Header="_View">
+                        <MenuItem Header="Focus _search" InputGestureText="Ctrl+K" Click="FocusSearch_Click"/>
+                        <MenuItem Header="_Command palette" InputGestureText="Ctrl+Shift+P" Click="Commands_Click"/>
+                        <Separator Style="{StaticResource MenuSeparatorStyle}"/>
+                        <MenuItem Header="Toggle _theme" Click="Theme_Click"/>
+                    </MenuItem>
+                    <MenuItem Header="_Managed">
+                        <MenuItem Header="_Sign in" Click="ManagedSignIn_Click"/>
+                        <MenuItem Header="S_ynchronize" Click="ManagedSync_Click" IsEnabled="{Binding CanSynchronizeManaged}"/>
+                        <MenuItem Header="Managed _tools…" Click="ManagedTools_Click"/>
+                        <Separator Style="{StaticResource MenuSeparatorStyle}"/>
+                        <MenuItem Header="Sign _out" Click="ManagedSignOut_Click"/>
+                    </MenuItem>
+                    <MenuItem Header="_Help">
+                        <MenuItem Header="NextRDP _help" Click="Help_Click"/>
+                    </MenuItem>
+                </Menu>
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="1" MinHeight="44" Background="{DynamicResource PanelBackground}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
+            <Grid Margin="8,2">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <ToolBar Background="Transparent" BorderThickness="0" VerticalAlignment="Center" AutomationProperties.Name="Quick access toolbar">
+                        <Button Click="NewConnection_Click" Style="{StaticResource ToolbarButtonStyle}" ToolBar.OverflowMode="Never" ToolTip="Create connection (Ctrl+N)" AutomationProperties.Name="Create connection">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" Style="{StaticResource ToolbarGlyphStyle}"/><TextBlock Text="New" Style="{StaticResource ToolbarLabelStyle}"/></StackPanel>
+                        </Button>
+                        <Button Click="ConnectSelected_Click" IsEnabled="{Binding CanConnectSelected}" Style="{StaticResource ToolbarButtonStyle}" ToolBar.OverflowMode="Never" ToolTip="Connect selected connection (Enter)" AutomationProperties.Name="Connect selected connection">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE768;" Style="{StaticResource ToolbarGlyphStyle}"/><TextBlock Text="Connect" Style="{StaticResource ToolbarLabelStyle}"/></StackPanel>
+                        </Button>
+                        <Button Click="EditConnection_Click" IsEnabled="{Binding CanEditSelected}" Style="{StaticResource ToolbarButtonStyle}" ToolBar.OverflowMode="Never" ToolTip="Edit selected connection (Ctrl+E)" AutomationProperties.Name="Edit selected connection">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE70F;" Style="{StaticResource ToolbarGlyphStyle}"/><TextBlock Text="Edit" Style="{StaticResource ToolbarLabelStyle}"/></StackPanel>
+                        </Button>
+                        <Separator/>
+                        <Button x:Name="ToolbarDiagnosticsButton" Click="Diagnostics_Click" IsEnabled="{Binding HasSelectedConnection}" Style="{StaticResource ToolbarButtonStyle}" ToolBar.OverflowMode="Never" ToolTip="Run connectivity diagnostics" AutomationProperties.Name="Run connectivity diagnostics">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D9;" Style="{StaticResource ToolbarGlyphStyle}"/><TextBlock Text="Diagnostics" Style="{StaticResource ToolbarLabelStyle}"/></StackPanel>
+                        </Button>
+                        <Button x:Name="ToolbarCommandsButton" Click="Commands_Click" Style="{StaticResource ToolbarButtonStyle}" ToolBar.OverflowMode="Never" ToolTip="Open command palette (Ctrl+Shift+P)" AutomationProperties.Name="Open command palette">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE756;" Style="{StaticResource ToolbarGlyphStyle}"/><TextBlock Text="Commands" Style="{StaticResource ToolbarLabelStyle}"/></StackPanel>
+                        </Button>
+                        <Button x:Name="ToolbarOverflowButton" Visibility="Collapsed" Click="ToolbarOverflow_Click"
+                                Style="{StaticResource ToolbarButtonStyle}" ToolBar.OverflowMode="Never"
+                                ToolTip="More toolbar actions" AutomationProperties.Name="More toolbar actions">
+                            <TextBlock Text="&#xE712;" FontFamily="Segoe Fluent Icons" FontSize="14" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
+                        </Button>
+                </ToolBar>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Managed sign-in" Click="ManagedSignIn_Click" Style="{StaticResource CompactButtonStyle}" ToolTip="Sign in to a managed workspace" AutomationProperties.Name="Sign in to managed workspace"/>
+                    <ComboBox Width="125" Margin="3,0" ItemsSource="{Binding ManagedOrganizations}" SelectedItem="{Binding SelectedManagedOrganization}"
+                              DisplayMemberPath="Name" SelectionChanged="ManagedOrganization_SelectionChanged" ToolTip="Managed organization" AutomationProperties.Name="Managed organization"/>
+                    <ComboBox Width="125" Margin="3,0" ItemsSource="{Binding ManagedWorkspaces}" SelectedItem="{Binding SelectedManagedWorkspace}"
+                              DisplayMemberPath="Name" SelectionChanged="ManagedWorkspace_SelectionChanged" ToolTip="Managed workspace" AutomationProperties.Name="Managed workspace"/>
+                    <Button Click="ManagedSync_Click" IsEnabled="{Binding CanSynchronizeManaged}" Style="{StaticResource CompactButtonStyle}" ToolTip="Synchronize managed workspace" AutomationProperties.Name="Synchronize managed workspace">
+                        <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE895;" Style="{StaticResource ToolbarGlyphStyle}"/><TextBlock Text="Sync" Style="{StaticResource ToolbarLabelStyle}"/></StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="320"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Background="{DynamicResource PanelBackground}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Search name, host, tag, environment, or notes (Ctrl+K)"
+                             AutomationProperties.Name="Search connections"/>
+
+                    <Grid Grid.Row="1" Margin="3,9,0,4">
+                        <TextBlock Text="FOLDERS AND VIEWS" Foreground="{DynamicResource SecondaryText}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="+" Click="NewFolder_Click" Padding="7,2" Margin="1" ToolTip="New folder" AutomationProperties.Name="Create folder"/>
+                            <Button Content="Pin" Click="TogglePinFolder_Click" Padding="7,2" Margin="1" ToolTip="Pin or unpin selected managed folder" AutomationProperties.Name="Pin managed folder"/>
+                            <Button Content="✎" Click="EditFolder_Click" Padding="7,2" Margin="1" ToolTip="Edit selected folder" AutomationProperties.Name="Edit selected folder"/>
+                            <Button Content="−" Click="DeleteFolder_Click" Padding="7,2" Margin="1" ToolTip="Delete selected empty folder" AutomationProperties.Name="Delete selected folder"/>
+                        </StackPanel>
+                    </Grid>
+                    <TreeView x:Name="FolderTree" Grid.Row="2" ItemsSource="{Binding FolderNavigation}"
+                              SelectedItemChanged="FolderTree_SelectedItemChanged" Background="Transparent" BorderThickness="0"
+                              Foreground="{DynamicResource PrimaryText}" AutomationProperties.Name="Connection folders and views"
+                              MinHeight="56" MaxHeight="96" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ScrollViewer.PanningMode="VerticalFirst">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                        <TreeView.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type local:FolderNavigationNode}" ItemsSource="{Binding Children}">
+                                <TextBlock Text="{Binding Name}"/>
+                            </HierarchicalDataTemplate>
+                        </TreeView.Resources>
+                    </TreeView>
+
+                    <Grid Grid.Row="3" Margin="3,7,0,4">
+                        <TextBlock Text="CONNECTIONS" Foreground="{DynamicResource SecondaryText}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="★" Click="ToggleFavorite_Click" Padding="7,2" Margin="1" ToolTip="Toggle favorite" AutomationProperties.Name="Toggle selected connection favorite"/>
+                            <Button Content="Delete" Click="DeleteConnection_Click" Padding="7,2" Margin="1" ToolTip="Delete selected connection"/>
+                        </StackPanel>
+                    </Grid>
+                    <ListBox x:Name="ConnectionList" Grid.Row="4" ItemsSource="{Binding FilteredConnections}" SelectedItem="{Binding SelectedConnection}"
+                             SelectionMode="Extended"
+                             Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True"
+                             VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                             ScrollViewer.PanningMode="VerticalFirst" MouseDoubleClick="Connection_DoubleClick" AutomationProperties.Name="Saved connections">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource CompactConnectionItemStyle}">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding Converter={StaticResource ConnectionAccessibilityConverter}}"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <EventSetter Event="PreviewMouseRightButtonDown" Handler="ConnectionItem_PreviewMouseRightButtonDown"/>
+                                <EventSetter Event="ContextMenuOpening" Handler="ConnectionItem_ContextMenuOpening"/>
+                                <Setter Property="ContextMenu">
+                                    <Setter.Value>
+                                        <ContextMenu AutomationProperties.Name="Connection actions"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Height="30" Padding="6,0" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <Border.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock MaxWidth="340" TextWrapping="Wrap">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource ConnectionOperationalDetailsConverter}">
+                                                        <Binding/>
+                                                        <Binding Path="PlacementTarget.Tag" RelativeSource="{RelativeSource AncestorType=ToolTip}"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </ToolTip>
+                                    </Border.ToolTip>
+                                    <AutomationProperties.HelpText>
+                                        <MultiBinding Converter="{StaticResource ConnectionOperationalDetailsConverter}">
+                                            <Binding/>
+                                            <Binding Path="DataContext" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                        </MultiBinding>
+                                    </AutomationProperties.HelpText>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="4"/><ColumnDefinition Width="7"/><ColumnDefinition Width="5*"/>
+                                            <ColumnDefinition Width="4*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" CornerRadius="2" Height="20" VerticalAlignment="Center" Background="{Binding Environment, Converter={StaticResource EnvironmentBrushConverter}}" ToolTip="{Binding Environment}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding Converter={StaticResource HostPortConverter}}" Foreground="{DynamicResource SecondaryText}" FontSize="11" VerticalAlignment="Center" TextAlignment="Right" TextTrimming="CharacterEllipsis" Margin="6,0"/>
+                                        <Border Grid.Column="4" Padding="4,1" CornerRadius="3" Background="{DynamicResource Accent}" Margin="2,0" VerticalAlignment="Center" ToolTip="Managed workspace connection">
+                                            <Border.Visibility>
+                                                <MultiBinding Converter="{StaticResource ManagedConnectionVisibilityConverter}">
+                                                    <Binding/>
+                                                    <Binding Path="DataContext" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                </MultiBinding>
+                                            </Border.Visibility>
+                                            <TextBlock Text="M" Foreground="{DynamicResource AccentText}" FontWeight="SemiBold" FontSize="9"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="5" Text="&#x2605;" Foreground="{DynamicResource FavoriteText}" FontSize="12" Visibility="{Binding IsFavorite, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" Margin="3,0,0,0"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Border Grid.Row="5" Background="{DynamicResource InsetBackground}" CornerRadius="7" Padding="8" Margin="0,8,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="76"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Quick connect" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                            <TextBlock Grid.Row="1" Text="Name" Foreground="{DynamicResource SecondaryText}" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding QuickName}" Margin="0,2" ToolTip="Example: Production web server" AutomationProperties.Name="Quick connection name"/>
+                            <TextBlock Grid.Row="2" Text="Host or IP" Foreground="{DynamicResource SecondaryText}" FontSize="11" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding QuickHost}" Margin="0,2" ToolTip="Example: server.example.com or 192.0.2.10" AutomationProperties.Name="Quick host or IP address"/>
+                            <TextBlock Grid.Row="3" Text="Port" Foreground="{DynamicResource SecondaryText}" FontSize="11" VerticalAlignment="Center"/>
+                            <Grid Grid.Row="3" Grid.Column="1" Margin="0,2">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="68"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding QuickPort}" ToolTip="Default RDP port: 3389" AutomationProperties.Name="Quick RDP port"/>
+                                <Button Grid.Column="1" Content="Save and connect" Click="QuickConnect_Click" Margin="5,0,0,0" Padding="8,6" Style="{StaticResource AccentButtonStyle}" AutomationProperties.Name="Save and connect"/>
+                            </Grid>
+                            <TextBlock Grid.Row="4" Grid.ColumnSpan="2" Text="Windows prompts; passwords are not saved." Foreground="{DynamicResource SecondaryText}" FontSize="10" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" ToolTip="Windows prompts for credentials when the session opens. Passwords are never saved."/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1">
+                <TabControl x:Name="SessionTabs" ItemsSource="{Binding Sessions}" SelectedItem="{Binding SelectedSession}" Background="{DynamicResource AppBackground}" BorderThickness="0">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="TabItem" BasedOn="{StaticResource {x:Type TabItem}}">
+                            <Setter Property="AutomationProperties.Name" Value="{Binding AccessibilityName}"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" AutomationProperties.Name="{Binding Name}">
+                                <Border Width="112" Height="63" Margin="0,0,8,0" CornerRadius="4" ClipToBounds="True" Background="{DynamicResource SessionBackground}"
+                                        Visibility="{Binding IsThumbnailEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <Grid>
+                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" AutomationProperties.Name="Live session thumbnail; memory only"/>
+                                        <TextBlock Text="{Binding ThumbnailStatus}" FontSize="9" Foreground="{DynamicResource SecondaryText}" TextWrapping="Wrap"
+                                                   TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5"/>
+                                    </Grid>
+                                </Border>
+                                <Ellipse Width="7" Height="7" Fill="{Binding Environment, Converter={StaticResource EnvironmentBrushConverter}}" Margin="0,0,6,0"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Environment}" VerticalAlignment="Center" Margin="7,0,0,0" FontSize="10" Foreground="{DynamicResource SecondaryText}"/>
+                                <Button Content="×" Click="CloseSession_Click" Margin="8,0,0,0" Padding="4,0" Background="Transparent" AutomationProperties.Name="Close session"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </TabControl.ItemTemplate>
+                    <TabControl.ContentTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{Binding Environment, Converter={StaticResource EnvironmentBrushConverter}}" BorderThickness="3" Background="{DynamicResource SessionBackground}">
+                                <Grid>
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                    <Grid Grid.Row="0" MinHeight="46" Background="{DynamicResource ItemBackground}" Margin="0,0,0,3">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock Text="PRODUCTION SESSION" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource ProductionWatermarkBrush}"
+                                                   VerticalAlignment="Center" Margin="12,0" IsHitTestVisible="False"
+                                                   Visibility="{Binding ShowProductionWatermark, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
+                                            <Ellipse Width="8" Height="8" Fill="{Binding Environment, Converter={StaticResource EnvironmentBrushConverter}}" Margin="0,0,7,0"/>
+                                            <TextBlock Text="{Binding Environment}" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                                            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SecondaryText}" AutomationProperties.LiveSetting="Polite"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8,5">
+                                            <Button Content="Send Ctrl+Alt+End" Click="SecureAttention_Click" Padding="9,5" Margin="0,0,4,0"
+                                                    ToolTip="Open the Windows security screen in the remote session"
+                                                    AutomationProperties.Name="Send Ctrl Alt End to remote session"
+                                                    AutomationProperties.HelpText="Available only when the effective connection policy permits Secure Attention Sequence"/>
+                                            <Button Content="Full screen" Click="FullScreen_Click" Padding="9,5" Margin="4,0,0,0"
+                                                    ToolTip="Press Ctrl+Alt+Break to leave full screen" AutomationProperties.Name="Enter full screen"
+                                                    AutomationProperties.HelpText="Use the pinned Microsoft RDP connection bar or Ctrl+Alt+Break to leave full screen"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <ContentControl Grid.Row="1" Content="{Binding SessionContent}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </TabControl.ContentTemplate>
+                </TabControl>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Visibility="{Binding HasNoSessions, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="Ready for a secure RDP session" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Choose a saved connection or use Quick connect. Credentials remain in the Windows prompt." Foreground="{DynamicResource SecondaryText}" Margin="0,10,0,0"/>
+                </StackPanel>
+                <Border HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="20" Padding="14" CornerRadius="8" Background="{DynamicResource ItemBackground}"
+                        Visibility="{Binding HasWorkspaceDescriptors, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="Saved workspace is ready to reopen" FontWeight="SemiBold"/>
+                        <ItemsControl ItemsSource="{Binding WorkspaceDescriptors}" Margin="0,5,0,8">
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource SecondaryText}"/></DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Content="Review and reconnect" Click="ReopenWorkspace_Click" IsHitTestVisible="True" Style="{StaticResource AccentButtonStyle}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Border Grid.Row="3" Background="{DynamicResource StatusBackground}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0">
+            <Grid Margin="12,0">
+                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" Foreground="{DynamicResource SecondaryText}" FontSize="11" AutomationProperties.LiveSetting="Polite"/>
+                <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource SecurityText}" FontSize="11"
+                           Text="{Binding ManagedStatusMessage}" TextTrimming="CharacterEllipsis" MaxWidth="650" ToolTip="{Binding ManagedStatusMessage}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,121 @@
+name: nextrdp-phase2
+
+services:
+  postgres:
+    image: postgres:18.1-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextrdp
+      POSTGRES_USER: nextrdp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextrdp -d nextrdp"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [backend]
+
+  openfga-migrate:
+    image: openfga/openfga:v1.18.1
+    command: migrate
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://nextrdp:${POSTGRES_PASSWORD}@postgres:5432/nextrdp?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [backend]
+    restart: "no"
+
+  openfga:
+    image: openfga/openfga:v1.18.1
+    command: run
+    environment:
+      OPENFGA_DATASTORE_ENGINE: postgres
+      OPENFGA_DATASTORE_URI: postgres://nextrdp:${POSTGRES_PASSWORD}@postgres:5432/nextrdp?sslmode=disable
+      OPENFGA_PLAYGROUND_ENABLED: "false"
+      OPENFGA_LOG_FORMAT: json
+    depends_on:
+      openfga-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/grpc_health_probe", "-addr=localhost:8081"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [backend]
+    restart: unless-stopped
+
+  opa:
+    image: openpolicyagent/opa:1.18.2-static
+    command: ["run", "--server", "--addr=0.0.0.0:8181", "--log-format=json", "/policies/phase2.rego"]
+    volumes:
+      - ./deployment/opa:/policies:ro
+    healthcheck:
+      test: ["CMD", "/opa", "eval", "--fail", "--data", "/policies/phase2.rego", "data.nextrdp.phase2.decision"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [backend]
+    restart: unless-stopped
+
+  data-protection-init:
+    image: mcr.microsoft.com/dotnet/aspnet:10.0
+    user: root
+    command: ["sh", "-c", "chown -R 1654:1654 /var/lib/nextrdp/keys && chmod 700 /var/lib/nextrdp/keys"]
+    volumes:
+      - data-protection-keys:/var/lib/nextrdp/keys
+    networks: [backend]
+    restart: "no"
+
+  control-plane:
+    build:
+      context: .
+      dockerfile: src/NextRdp.ControlPlane/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__NextRdp: Host=postgres;Port=5432;Database=nextrdp;Username=nextrdp;Password=${POSTGRES_PASSWORD};Include Error Detail=false
+      Authentication__DevelopmentIdentity__Enabled: "true"
+      Authorization__OpenFga__BaseAddress: http://openfga:8080/
+      Authorization__Opa__BaseAddress: http://opa:8181/
+      Security__DataProtectionKeysPath: /var/lib/nextrdp/keys
+      Backup__Pbkdf2Iterations: ${BACKUP_PBKDF2_ITERATIONS:-600000}
+    volumes:
+      - data-protection-keys:/var/lib/nextrdp/keys
+    depends_on:
+      postgres:
+        condition: service_healthy
+      openfga:
+        condition: service_healthy
+      opa:
+        condition: service_healthy
+      data-protection-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:5080:8080"
+    networks: [backend, frontend]
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: .
+      dockerfile: src/NextRdp.Admin/Dockerfile
+    depends_on:
+      control-plane:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5090:8080"
+    networks: [frontend]
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  data-protection-keys:
+
+networks:
+  backend:
+    internal: true
+  frontend:
