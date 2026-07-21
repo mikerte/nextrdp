@@ -229,7 +229,7 @@ foreach ($property in $bulkMetadata.Keys) {
     Assert-Phase2 ($bulkUpdated.metadata.PSObject.Properties[$property].Value -eq $bulkMetadata[$property]) "bulk edit did not persist metadata field '$property'"
 }
 $gatewayDiagnostic = (Invoke-Phase2Json POST "/api/v1/organizations/$organizationId/workspaces/$workspaceId/gateway/diagnostics" @{
-    host = "127.0.0.1"; port = 9; requireTls = $false; expectedServerName = "127.0.0.1"
+    host = "127.0.0.1"; port = 9; expectedServerName = "127.0.0.1"
 }).Data
 Assert-Phase2 ($gatewayDiagnostic.dnsSucceeded -eq $true -and -not [string]::IsNullOrWhiteSpace([string]$gatewayDiagnostic.outcome)) "gateway diagnostic did not return an actionable bounded result"
 

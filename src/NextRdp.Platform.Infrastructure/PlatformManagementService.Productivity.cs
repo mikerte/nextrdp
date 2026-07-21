@@ -281,7 +281,7 @@ public sealed partial class PlatformManagementService
     public async Task<GatewayDiagnosticResult> DiagnoseGatewayAsync(PlatformActor actor, Guid organizationId, Guid workspaceId, GatewayDiagnosticRequest request, CancellationToken cancellationToken = default)
     {
         await DemandAsync(actor, PlatformAction.RunGatewayDiagnostics, organizationId, workspaceId, "workspace", workspaceId,
-            new Dictionary<string, object?> { ["requireTls"] = request.RequireTls }, cancellationToken);
+            new Dictionary<string, object?> { ["tlsRequired"] = true }, cancellationToken);
         if (!PlatformValidation.IsValidHost(request.Host) || request.Port is < 1 or > 65535)
             throw PlatformProblemException.Validation(["Gateway host and port are invalid."]);
         var serverName = string.IsNullOrWhiteSpace(request.ExpectedServerName) ? request.Host : request.ExpectedServerName.Trim();
@@ -297,10 +297,9 @@ public sealed partial class PlatformManagementService
             if (!dns) throw new SocketException((int)SocketError.HostNotFound);
             using var client = new TcpClient();
             await client.ConnectAsync(request.Host, request.Port, timeout.Token);
-            tcp = true; outcome = request.RequireTls ? "tls_failed" : "reachable";
-            if (request.RequireTls)
+            tcp = true; outcome = "tls_failed";
+            using (var stream = new SslStream(client.GetStream(), false))
             {
-                using var stream = new SslStream(client.GetStream(), false);
                 await stream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
                 {
                     TargetHost = serverName,
@@ -319,7 +318,7 @@ public sealed partial class PlatformManagementService
         var result = new GatewayDiagnosticResult(dns, addressCount, tcp, tls, outcome, watch.ElapsedMilliseconds, timeProvider.GetUtcNow());
         RecordAudit(actor, organizationId, workspaceId, "gateway.diagnostic_executed", "workspace", workspaceId,
             outcome.StartsWith("reachable", StringComparison.Ordinal) ? AuditOutcome.Succeeded : AuditOutcome.Failed,
-            new { request.Port, request.RequireTls, result.DnsSucceeded, result.AddressCount, result.TcpSucceeded, result.TlsSucceeded, result.Outcome, result.DurationMilliseconds });
+            new { request.Port, TlsRequired = true, result.DnsSucceeded, result.AddressCount, result.TcpSucceeded, result.TlsSucceeded, result.Outcome, result.DurationMilliseconds });
         await SaveChangesAsync(cancellationToken);
         return result;
     }

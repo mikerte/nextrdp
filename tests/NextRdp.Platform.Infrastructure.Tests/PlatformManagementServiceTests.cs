@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using NextRdp.Core;
@@ -8,6 +10,9 @@ namespace NextRdp.Platform.Infrastructure.Tests;
 
 public sealed class PlatformManagementServiceTests
 {
+    private static readonly JsonSerializerOptions WebJsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly string[] TlsFailureOutcomes = ["tls_failed", "tls_validation_failed"];
+
     [Fact]
     public async Task SharedAndPersonalConnectionsRemainScopedAndSynchronizeWithoutSecrets()
     {
@@ -378,6 +383,35 @@ public sealed class PlatformManagementServiceTests
         Assert.Equal(tabGroupId, Assert.Single(sanitized.TabGroups).Id);
         Assert.Empty(sanitized.TabGroups[0].ConnectionIds);
         Assert.True(sanitized.Layout.ReopenLastWorkspace);
+    }
+
+    [Fact]
+    public async Task GatewayDiagnosticsCannotSkipTlsFromLegacyClientFlag()
+    {
+        await using var fixture = new ServiceFixture();
+        var (organization, workspace) = await fixture.CreateScopeAsync();
+        var actor = ServiceFixture.Actor(organization.Id, WorkspaceRole.WorkspaceAdministrator);
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        var request = JsonSerializer.Deserialize<GatewayDiagnosticRequest>(
+            $$"""{"host":"127.0.0.1","port":{{port}},"requireTls":false,"expectedServerName":"localhost"}""",
+            WebJsonOptions);
+
+        Assert.NotNull(request);
+        var diagnostic = fixture.Service.DiagnoseGatewayAsync(actor, organization.Id, workspace.Id, request);
+        using (var connection = await listener.AcceptTcpClientAsync().WaitAsync(TimeSpan.FromSeconds(5)))
+        {
+            await connection.GetStream().WriteAsync("This is not TLS."u8.ToArray());
+            connection.Close();
+        }
+        var result = await diagnostic.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.True(result.DnsSucceeded);
+        Assert.True(result.TcpSucceeded);
+        Assert.False(result.TlsSucceeded);
+        Assert.Contains(result.Outcome, TlsFailureOutcomes);
+        Assert.Null(typeof(GatewayDiagnosticRequest).GetProperty("RequireTls"));
     }
 
     [Fact]
