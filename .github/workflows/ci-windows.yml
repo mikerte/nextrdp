@@ -42,10 +42,11 @@ jobs:
         run: npm ci
 
       - name: Check Developer Certificate of Origin
+        if: github.event_name == 'pull_request'
         shell: pwsh
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: .\scripts\check-dco.ps1 -BaseSha $env:BASE_SHA -HeadSha $env:HEAD_SHA
 
       - name: Check public source boundary
