@@ -8,6 +8,11 @@ namespace NextRdp.RdpHost.Tests;
 
 public sealed class RdpControlActivationTests
 {
+    // Hosted Windows runners can take substantially longer to initialize the native RDP
+    // COM control on a cold desktop. Keep the operation bounded without allowing a timed-out
+    // STA worker to overlap the next control test and invalidate its RCW.
+    private static readonly TimeSpan StaOperationTimeout = TimeSpan.FromSeconds(60);
+
     [Fact]
     public void ThumbnailCaptureIsSuppressedBeforeConnectedState()
     {
@@ -23,7 +28,7 @@ public sealed class RdpControlActivationTests
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)), "RDP thumbnail privacy test timed out.");
+        Assert.True(thread.Join(StaOperationTimeout), "RDP thumbnail privacy test timed out.");
         Assert.Null(failure);
     }
 
@@ -46,7 +51,7 @@ public sealed class RdpControlActivationTests
 
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)), "RDP ActiveX control activation timed out.");
+        Assert.True(thread.Join(StaOperationTimeout), "RDP ActiveX control activation timed out.");
         Assert.Null(failure);
     }
 
@@ -112,7 +117,7 @@ public sealed class RdpControlActivationTests
 
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)), "RDP connection configuration timed out.");
+        Assert.True(thread.Join(StaOperationTimeout), "RDP connection configuration timed out.");
         Assert.Null(failure);
     }
 
@@ -149,7 +154,7 @@ public sealed class RdpControlActivationTests
 
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)), "RDP redirection configuration timed out.");
+        Assert.True(thread.Join(StaOperationTimeout), "RDP redirection configuration timed out.");
         Assert.Null(failure);
     }
 
@@ -208,7 +213,7 @@ public sealed class RdpControlActivationTests
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)), "Phase 2 RDP control configuration timed out.");
+        Assert.True(thread.Join(StaOperationTimeout), "Phase 2 RDP control configuration timed out.");
         Assert.Null(failure);
     }
 
@@ -235,7 +240,7 @@ public sealed class RdpControlActivationTests
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)));
+        Assert.True(thread.Join(StaOperationTimeout));
         Assert.Null(failure);
         Assert.Contains("after", diagnostic, StringComparison.OrdinalIgnoreCase);
     }
@@ -255,7 +260,7 @@ public sealed class RdpControlActivationTests
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)));
+        Assert.True(thread.Join(StaOperationTimeout));
         Assert.IsType<NotSupportedException>(observed);
         Assert.Contains("direction", observed!.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -280,7 +285,7 @@ public sealed class RdpControlActivationTests
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)));
+        Assert.True(thread.Join(StaOperationTimeout));
         Assert.IsType<NotSupportedException>(observed);
         Assert.Contains("COM and LPT", observed!.Message, StringComparison.OrdinalIgnoreCase);
     }
@@ -339,7 +344,7 @@ public sealed class RdpControlActivationTests
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)), "RDP capability probe timed out.");
+        Assert.True(thread.Join(StaOperationTimeout), "RDP capability probe timed out.");
         Assert.Null(failure);
     }
 
@@ -379,7 +384,7 @@ public sealed class RdpControlActivationTests
         });
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
-        Assert.True(thread.Join(TimeSpan.FromSeconds(15)), "RDP pre-connection close timed out.");
+        Assert.True(thread.Join(StaOperationTimeout), "RDP pre-connection close timed out.");
         Assert.Null(failure);
     }
 
