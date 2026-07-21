@@ -62,6 +62,11 @@ try
         $certificateAddedByTest = $true
     }
 
+    $signature = Get-AuthenticodeSignature -LiteralPath $packagePath
+    if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Thumbprint -ne $certificate.Thumbprint) {
+        throw 'The MSIX signature did not become valid after applying temporary machine trust.'
+    }
+
     & $kitPath reset
     if ($LASTEXITCODE -ne 0) { throw "Windows App Certification Kit reset failed with exit code $LASTEXITCODE." }
     & $kitPath test -appxpackagepath $packagePath -reportoutputpath $reportPath

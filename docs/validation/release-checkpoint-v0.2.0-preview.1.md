@@ -27,11 +27,13 @@ Run:
 
 ## Isolated Windows acceptance
 
-The machine-backed gate uses a disposable Windows 11 x64 test account and records no target, account, credential, or machine name.
+The machine-backed gate uses either a disposable Windows 11 x64 test account or a clean `NextRDP.Client` package namespace. Both scripts launch the installed executable against a disposable test-only inventory, fingerprint any existing `%LOCALAPPDATA%\NextRDP` directory before and after the run, and prove it was unchanged. Evidence records no target, account, credential, or machine name.
 
 1. `test-msix-install.ps1` verifies clean install, responsive launch, normal close, uninstall, package-data cleanup, and removal of temporary certificate trust.
-2. `test-msix-upgrade.ps1` verifies stable identity, publisher, architecture, and signer; launch of the previous package; upgrade to `0.2.0.0`; package-local inventory-data persistence; launch after upgrade; uninstall; data cleanup; and temporary-trust cleanup.
+2. `test-msix-upgrade.ps1` verifies stable identity, publisher, architecture, and signer; launch of the previous package; upgrade to `0.2.0.0`; isolated inventory-data persistence; launch after upgrade; uninstall; data cleanup; and temporary-trust cleanup.
 3. The test certificate and test-signed package remain local and are never represented as production trusted.
+4. Both scripts refuse an existing package installation or package-data directory and verify that temporary trust is removed when they added it.
+5. `invoke-msix-acceptance.ps1` provides a self-elevating entry point and writes only ignored local transcripts; it does not change the evidence schema or publish machine details.
 
 ## Release acceptance
 

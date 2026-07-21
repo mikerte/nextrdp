@@ -130,11 +130,13 @@ The command runs the full Phase 1/2 release gate and writes a self-contained x64
 
 Development builds created before the public-source launch used identity `NextRDP.Hackathon`. Uninstall that old test package before installing `NextRDP.Client`; Windows treats them as separate applications.
 
-On an elevated clean Windows 11 x64 test account, the isolated acceptance runner temporarily trusts only the generated development certificate, installs and launches the package, uninstalls it, and removes the trust entry it added:
+On Windows 11 x64, the isolated acceptance runner requests elevation, temporarily trusts only the generated development certificate, installs and launches the package against disposable test data, uninstalls it, and removes the trust entry it added:
 
 ```powershell
-.\scripts\test-msix-install.ps1
+.\scripts\invoke-msix-acceptance.ps1 -Mode Install
 ```
+
+The runner fingerprints any existing local inventory before and after the lifecycle and fails if it changes.
 
 This is not a production distribution path. A public binary release requires a protected Authenticode certificate and a separate release review.
 
