@@ -12,6 +12,9 @@ $parsedVersion = $null
 if (-not [Version]::TryParse($Version, [ref]$parsedVersion) -or $parsedVersion.ToString(4) -ne $Version) {
     throw "Package version '$Version' must be a numeric four-part MSIX version."
 }
+foreach ($part in @($parsedVersion.Major, $parsedVersion.Minor, $parsedVersion.Build, $parsedVersion.Revision)) {
+    if ($part -lt 0 -or $part -gt 65535) { throw "Package version '$Version' contains a component outside 0-65535." }
+}
 $publish = Join-Path $root 'artifacts\publish\win-x64'
 $staging = Join-Path $root 'artifacts\msix\staging'
 $output = Join-Path $root "artifacts\msix\NextRDP-$Version-x64.msix"
@@ -72,13 +75,10 @@ if ($actualThumbprint -ne $expectedThumbprint) {
     throw "Signed MSIX verification failed: expected signer $expectedThumbprint but found $actualThumbprint."
 }
 
-$isExpectedUntrustedTestRoot =
-    $signature.Status -eq 'UnknownError' -and
-    $signature.StatusMessage -match '(?i)certificate chain.*root certificate.*not trusted|root certificate.*not trusted'
-if ($signature.Status -ne 'Valid' -and -not $isExpectedUntrustedTestRoot) {
+if (-not (Test-NextRdpEvaluationSignature $signature)) {
     throw "Signed MSIX verification failed: $($signature.StatusMessage)"
 }
-if ($isExpectedUntrustedTestRoot) {
+if ($signature.Status -ne 'Valid') {
     Write-Warning 'The MSIX signature matches the generated test certificate, but its self-signed root is not trusted on this machine. Import the exported certificate only on test systems before installation.'
 }
 

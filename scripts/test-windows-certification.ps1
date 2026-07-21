@@ -28,7 +28,7 @@ if (-not (Test-NextRdpPhaseOneClientPlatform -ProductType ([int]$operatingSystem
     throw 'Windows App Certification Kit acceptance requires a Windows 11 x64 client workstation (build 22000 or newer); Windows Server does not satisfy the Phase 1 release target.'
 }
 $signature = Get-AuthenticodeSignature -LiteralPath $packagePath
-if ($signature.Status -ne 'Valid') { throw "The MSIX signature is not valid: $($signature.StatusMessage)" }
+if (-not (Test-NextRdpEvaluationSignature $signature)) { throw "The MSIX signature is not valid: $($signature.StatusMessage)" }
 $certificate = [Security.Cryptography.X509Certificates.X509Certificate2]::new($certificatePath)
 if ($signature.SignerCertificate.Thumbprint -ne $certificate.Thumbprint) { throw 'The exported test certificate does not match the MSIX signer.' }
 $packageHash = Get-FileHash -LiteralPath $packagePath -Algorithm SHA256

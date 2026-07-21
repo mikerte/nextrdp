@@ -58,3 +58,10 @@ function Get-NextRdpReleaseMetadata {
         MetadataPath = $metadataPath
     }
 }
+
+function Test-NextRdpEvaluationSignature([object]$Signature) {
+    if ($null -eq $Signature -or $null -eq $Signature.SignerCertificate) { return $false }
+    if ($Signature.Status -eq 'Valid') { return $true }
+    return $Signature.Status -eq 'UnknownError' -and
+        $Signature.StatusMessage -match '(?i)certificate chain.*root certificate.*not trusted|root certificate.*not trusted'
+}

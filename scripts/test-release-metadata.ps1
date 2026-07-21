@@ -6,6 +6,14 @@ $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot 'release-metadata.ps1')
 $release = Get-NextRdpReleaseMetadata -ProjectRoot $root
 
+$testSigner = [pscustomobject]@{ Thumbprint = 'TEST' }
+$validSignature = [pscustomobject]@{ Status = 'Valid'; StatusMessage = 'Valid'; SignerCertificate = $testSigner }
+$untrustedEvaluationSignature = [pscustomobject]@{ Status = 'UnknownError'; StatusMessage = 'A certificate chain processed, but terminated in a root certificate which is not trusted by the trust provider.'; SignerCertificate = $testSigner }
+$invalidSignature = [pscustomobject]@{ Status = 'HashMismatch'; StatusMessage = 'The file hash is not valid.'; SignerCertificate = $testSigner }
+if (-not (Test-NextRdpEvaluationSignature $validSignature) -or -not (Test-NextRdpEvaluationSignature $untrustedEvaluationSignature) -or (Test-NextRdpEvaluationSignature $invalidSignature)) {
+    throw 'Evaluation-signature status validation did not preserve the fail-closed trust boundary.'
+}
+
 [xml]$directoryProps = Get-Content -LiteralPath (Join-Path $root 'Directory.Build.props') -Raw -Encoding utf8
 $releaseImport = @($directoryProps.Project.Import | Where-Object { $_.Project -eq '$(MSBuildThisFileDirectory)eng\Release.props' })
 if ($releaseImport.Count -ne 1) { throw 'Directory.Build.props must import eng\Release.props exactly once.' }
