@@ -2,6 +2,10 @@
 
 This roadmap describes intended product direction, not a delivery guarantee. Priorities may change as real-world testing, security review, and contributor feedback reveal better sequencing.
 
+## Preview checkpoint
+
+`v0.2.0-preview.1` freezes the working desktop MVP and self-hosted management preview before privileged-access implementation begins. The checkpoint uses aligned .NET, administration-console, PowerShell, and numeric MSIX versions; a repeatable local release build; clean-install and upgrade acceptance runners; hashes; and source-only GitHub distribution. Production certificate custody, production-signed binaries, MSI, managed deployment, update rings, rollback, and offline packages remain first-enterprise-release work.
+
 ## Current: desktop MVP and shared-management preview
 
 The current source includes:

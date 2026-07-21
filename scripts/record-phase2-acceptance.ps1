@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$ResultsPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'samples\phase2-acceptance-results.template.json'),
-    [string]$PackagePath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'artifacts\msix\NextRDP-0.1.0.0-x64.msix'),
+    [string]$PackagePath = '',
     [string]$OutputDirectory = (Join-Path (Split-Path -Parent $PSScriptRoot) 'artifacts\acceptance'),
     [string[]]$CorporateIdentityEvidencePath = @(),
     [string[]]$ManagedRdpEvidencePath = @(),
@@ -14,6 +14,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'release-metadata.ps1')
+$release = Get-NextRdpReleaseMetadata -ProjectRoot $projectRoot
+if ([string]::IsNullOrWhiteSpace($PackagePath)) {
+    $PackagePath = Join-Path $projectRoot "artifacts\msix\NextRDP-$($release.MsixVersion)-x64.msix"
+}
 . (Join-Path $PSScriptRoot 'phase1-platform.ps1')
 
 function Assert-ExactProperties([object]$Value, [string[]]$Expected, [string]$Label) {

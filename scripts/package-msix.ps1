@@ -1,10 +1,17 @@
 [CmdletBinding()]
 param(
-    [string]$Version = '0.1.0.0'
+    [string]$Version = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'release-metadata.ps1')
+$release = Get-NextRdpReleaseMetadata -ProjectRoot $root
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $release.MsixVersion }
+$parsedVersion = $null
+if (-not [Version]::TryParse($Version, [ref]$parsedVersion) -or $parsedVersion.ToString(4) -ne $Version) {
+    throw "Package version '$Version' must be a numeric four-part MSIX version."
+}
 $publish = Join-Path $root 'artifacts\publish\win-x64'
 $staging = Join-Path $root 'artifacts\msix\staging'
 $output = Join-Path $root "artifacts\msix\NextRDP-$Version-x64.msix"
@@ -25,7 +32,7 @@ Copy-Item -Path (Join-Path $publish '*') -Destination $staging -Recurse
 $manifest = @"
 <?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" IgnorableNamespaces="uap uap10 rescap">
-  <Identity Name="NextRDP.Client" Publisher="CN=NextRDP Development" Version="$Version" ProcessorArchitecture="x64" />
+  <Identity Name="$($release.PackageIdentity)" Publisher="$($release.PackagePublisher)" Version="$Version" ProcessorArchitecture="x64" />
   <Properties><DisplayName>NextRDP</DisplayName><PublisherDisplayName>NextRDP Development</PublisherDisplayName><Logo>Assets\StoreLogo.png</Logo></Properties>
   <Resources><Resource Language="en-us" /></Resources>
   <Dependencies><TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0" /></Dependencies>
@@ -51,9 +58,9 @@ if (Test-Path -LiteralPath $output) { Remove-Item -LiteralPath $output -Force }
 & $makeAppx pack /d $staging /p $output /o
 if ($LASTEXITCODE -ne 0) { throw "MSIX packaging failed with exit code $LASTEXITCODE." }
 
-$certificate = Get-ChildItem Cert:\CurrentUser\My | Where-Object Subject -eq 'CN=NextRDP Development' | Sort-Object NotAfter -Descending | Select-Object -First 1
+$certificate = Get-ChildItem Cert:\CurrentUser\My | Where-Object Subject -eq $release.PackagePublisher | Sort-Object NotAfter -Descending | Select-Object -First 1
 if ($null -eq $certificate -or $certificate.NotAfter -lt (Get-Date).AddDays(30)) {
-    $certificate = New-SelfSignedCertificate -Type Custom -Subject 'CN=NextRDP Development' -KeyUsage DigitalSignature -FriendlyName 'NextRDP test signing' -CertStoreLocation 'Cert:\CurrentUser\My' -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3') -NotAfter (Get-Date).AddYears(1)
+    $certificate = New-SelfSignedCertificate -Type Custom -Subject $release.PackagePublisher -KeyUsage DigitalSignature -FriendlyName 'NextRDP test signing' -CertStoreLocation 'Cert:\CurrentUser\My' -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3') -NotAfter (Get-Date).AddYears(1)
 }
 & $signTool sign /fd SHA256 /sha1 $certificate.Thumbprint /s My $output
 if ($LASTEXITCODE -ne 0) { throw "MSIX signing failed with exit code $LASTEXITCODE." }
@@ -91,7 +98,7 @@ finally
 }
 
 $packagedIdentity = $packagedManifest.Package.Identity
-if ($packagedIdentity.Name -ne 'NextRDP.Client' -or $packagedIdentity.Version -ne $Version -or $packagedIdentity.ProcessorArchitecture -ne 'x64')
+if ($packagedIdentity.Name -ne $release.PackageIdentity -or $packagedIdentity.Publisher -ne $release.PackagePublisher -or $packagedIdentity.Version -ne $Version -or $packagedIdentity.ProcessorArchitecture -ne 'x64')
 {
     throw "Unexpected packaged identity: $($packagedIdentity.Name) $($packagedIdentity.Version) $($packagedIdentity.ProcessorArchitecture)."
 }

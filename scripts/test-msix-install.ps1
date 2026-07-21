@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$Version = '0.1.0.0',
+    [string]$Version = '',
     [switch]$PreflightOnly,
     [switch]$ManualAcceptance,
     [ValidateRange(5, 180)][int]$ManualTimeoutMinutes = 60
@@ -8,10 +8,13 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'release-metadata.ps1')
+$release = Get-NextRdpReleaseMetadata -ProjectRoot $root
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $release.MsixVersion }
 . (Join-Path $PSScriptRoot 'phase1-platform.ps1')
 $packagePath = Join-Path $root "artifacts\msix\NextRDP-$Version-x64.msix"
 $certificatePath = Join-Path $root 'artifacts\msix\NextRDP-TestSigning.cer'
-$packageName = 'NextRDP.Client'
+$packageName = $release.PackageIdentity
 $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
 $isAdministrator = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $operatingSystem = Get-CimInstance -ClassName Win32_OperatingSystem
@@ -43,6 +46,7 @@ finally
 
 $identity = $manifest.Package.Identity
 if ($identity.Name -ne $packageName) { throw "Unexpected package identity '$($identity.Name)'; expected '$packageName'." }
+if ($identity.Publisher -ne $release.PackagePublisher) { throw "Unexpected package publisher '$($identity.Publisher)'; expected '$($release.PackagePublisher)'." }
 if ($identity.ProcessorArchitecture -ne 'x64') { throw "Unexpected package architecture '$($identity.ProcessorArchitecture)'; expected 'x64'." }
 if ($identity.Version -ne $Version) { throw "Unexpected package version '$($identity.Version)'; expected '$Version'." }
 $existingPackage = @(Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue)

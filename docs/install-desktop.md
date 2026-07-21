@@ -43,13 +43,13 @@ The executable is written to `artifacts\publish\win-x64\NextRdp.Desktop.exe`. Th
 ## Create a test-signed MSIX
 
 ```powershell
-.\scripts\package-msix.ps1 -Version 0.1.0.0
+.\scripts\package-msix.ps1
 ```
 
 The script:
 
 1. Produces the self-contained x64 build if necessary.
-2. Creates `artifacts\msix\NextRDP-0.1.0.0-x64.msix` with identity `NextRDP.Client`.
+2. Reads the authoritative version from `eng\Release.props` and creates `artifacts\msix\NextRDP-0.2.0.0-x64.msix` with identity `NextRDP.Client`.
 3. Creates a local development signing certificate under ignored `artifacts\msix\`.
 4. Signs and verifies the package and writes hashes.
 
@@ -64,6 +64,16 @@ The full test temporarily places only the generated certificate in Local Machine
 
 Never distribute the generated signing key or represent this package as production trusted.
 
+## Build the complete preview checkpoint
+
+From a clean checkout, run:
+
+```powershell
+.\scripts\build-preview-release.ps1
+```
+
+This runs the Phase 1/2 Release gate, builds the self-contained desktop, produces and verifies the local test MSIX, and writes a release ZIP, SHA-256 manifest, and machine-readable release manifest to `artifacts\release\v0.2.0-preview.1\`. The GitHub preview remains source-only; these locally signed artifacts are not published.
+
 ## Upgrade from older development builds
 
 Pre-public test packages used identity `NextRDP.Hackathon`. Windows treats `NextRDP.Hackathon` and `NextRDP.Client` as different applications. Uninstall the old package before installing the new one:
@@ -74,7 +84,19 @@ Get-AppxPackage -Name NextRDP.Hackathon | Remove-AppxPackage
 
 Back up any local inventory you need through NextRDP's secret-free inventory export before removing old test data.
 
-Future packages that retain the `NextRDP.Client` identity and publisher can use the normal MSIX upgrade path when properly signed.
+Packages that retain the `NextRDP.Client` identity and publisher use the normal MSIX upgrade path. The isolated upgrade test verifies identity and signer continuity, launch before and after upgrade, package-local inventory-data persistence, uninstall, data cleanup, and temporary-trust cleanup:
+
+```powershell
+.\scripts\test-msix-upgrade.ps1 `
+  -PreviousPackagePath 'C:\path\to\previous\NextRDP-x64.msix' `
+  -PreflightOnly
+
+# On an elevated, disposable Windows 11 x64 test account:
+.\scripts\test-msix-upgrade.ps1 `
+  -PreviousPackagePath 'C:\path\to\previous\NextRDP-x64.msix'
+```
+
+The previous and current packages must have the same identity, publisher, architecture, and test signer. The script refuses existing installations and user data.
 
 ## Data and uninstall
 

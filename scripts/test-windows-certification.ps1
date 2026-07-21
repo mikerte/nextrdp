@@ -1,15 +1,18 @@
 [CmdletBinding()]
 param(
-    [string]$Version = '0.1.0.0',
+    [string]$Version = '',
     [switch]$PreflightOnly
 )
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'release-metadata.ps1')
+$release = Get-NextRdpReleaseMetadata -ProjectRoot $root
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $release.MsixVersion }
 . (Join-Path $PSScriptRoot 'phase1-platform.ps1')
 $packagePath = Join-Path $root "artifacts\msix\NextRDP-$Version-x64.msix"
 $certificatePath = Join-Path $root 'artifacts\msix\NextRDP-TestSigning.cer'
-$packageName = 'NextRDP.Client'
+$packageName = $release.PackageIdentity
 $kitPath = 'C:\Program Files (x86)\Windows Kits\10\App Certification Kit\appcert.exe'
 $reportDirectory = Join-Path $root 'artifacts\certification'
 $reportPath = Join-Path $reportDirectory 'NextRDP-WACK.xml'
