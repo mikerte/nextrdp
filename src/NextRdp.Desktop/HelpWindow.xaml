@@ -1,7 +1,7 @@
 <Window x:Class="NextRdp.Desktop.HelpWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="NextRDP help" Icon="Assets/nextrdp.ico" Width="720" Height="650" MinWidth="620" MinHeight="500"
+        Title="NextRDP help" Width="720" Height="650" MinWidth="620" MinHeight="500"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         Background="{DynamicResource AppBackground}" Foreground="{DynamicResource PrimaryText}">
     <Grid Margin="24">

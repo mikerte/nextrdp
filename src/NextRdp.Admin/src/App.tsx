@@ -18,6 +18,7 @@ const views: { id: View; label: string; description: string }[] = [
   { id: 'audit', label: 'Audit', description: 'Redacted administrative activity' },
   { id: 'system', label: 'System health', description: 'Control-plane dependency readiness' }
 ];
+const nextRdpLogoUrl = new URL('../../NextRdp.Desktop/Assets/nextrdp-logo.png', import.meta.url).href;
 
 export function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -75,7 +76,7 @@ export function App() {
 
   return <div className="app-shell">
     <header className="topbar">
-      <div className="brand"><span className="brand-mark" aria-hidden="true">N</span><div><strong>NextRDP</strong><span>Administration</span></div></div>
+      <div className="brand"><img className="brand-logo" src={nextRdpLogoUrl} alt="" aria-hidden="true" /><div><strong>NextRDP</strong><span>Administration</span></div></div>
       <div className="scope-pickers">
         <label>Organization<Select aria-label="Organization" value={organizationId} onChange={event => setOrganizationId(event.target.value)}>
           <option value="">Choose organization</option>{organizations.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -113,7 +114,7 @@ export function App() {
 }
 
 function SignIn() {
-  return <Centered><Card className="signin-card"><div className="brand-mark large" aria-hidden="true">N</div><h1>Sign in to NextRDP</h1><p>Use your organization identity provider. Multi-factor authentication remains delegated to that provider.</p><Button appearance="primary" as="a" href="/auth/login?returnUrl=/">Continue with corporate sign-in</Button></Card></Centered>;
+  return <Centered><Card className="signin-card"><img className="brand-logo large" src={nextRdpLogoUrl} alt="" aria-hidden="true" /><h1>Sign in to NextRDP</h1><p>Use your organization identity provider. Multi-factor authentication remains delegated to that provider.</p><Button appearance="primary" as="a" href="/auth/login?returnUrl=/">Continue with corporate sign-in</Button></Card></Centered>;
 }
 
 function OrganizationSetup({ onCreated, onError }: { onCreated: () => Promise<void>; onError: (error: string) => void }) {
