@@ -1,7 +1,7 @@
 <Window x:Class="NextRdp.Desktop.FolderEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Folder" Icon="Assets/nextrdp.ico" Width="460" Height="280"
+        Title="Folder" Width="460" Height="280"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False" ResizeMode="NoResize"
         Background="{DynamicResource AppBackground}" Foreground="{DynamicResource PrimaryText}">
     <Grid Margin="22">

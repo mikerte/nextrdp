@@ -10,6 +10,7 @@ it('offers corporate sign-in when no authenticated session exists', async () => 
   }));
   render(<FluentProvider theme={webDarkTheme}><App /></FluentProvider>);
   expect(await screen.findByRole('heading', { name: 'Sign in to NextRDP' })).toBeInTheDocument();
+  expect(document.querySelector('.brand-logo')).toHaveAttribute('src', expect.stringContaining('nextrdp-logo.png'));
   expect(screen.getByRole('link', { name: 'Continue with corporate sign-in' })).toHaveAttribute('href', '/auth/login?returnUrl=/');
 });
 
@@ -22,6 +23,7 @@ it('renders keyboard-accessible navigation for an authenticated administrator', 
   vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify(responses.shift()), { status: 200, headers: { 'Content-Type': 'application/json' } }));
   render(<FluentProvider theme={webDarkTheme}><App /></FluentProvider>);
   expect(await screen.findByRole('navigation', { name: 'Administration navigation' })).toBeInTheDocument();
+  expect(document.querySelector('.brand-logo')).toHaveAttribute('src', expect.stringContaining('nextrdp-logo.png'));
   expect(screen.getByRole('button', { name: /Inventory/ })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: /Commands/ })).toHaveAttribute('aria-keyshortcuts', 'Control+K');
 });

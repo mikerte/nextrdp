@@ -3,6 +3,7 @@ WORKDIR /app
 COPY src/NextRdp.Admin/package*.json ./
 RUN npm ci
 COPY src/NextRdp.Admin/ ./
+COPY src/NextRdp.Desktop/Assets/nextrdp-logo.png /NextRdp.Desktop/Assets/nextrdp-logo.png
 RUN npm run build
 
 FROM nginx:1.29.4-alpine

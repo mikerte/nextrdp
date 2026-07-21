@@ -2,9 +2,14 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:NextRdp.Desktop"
-        Title="NextRDP" Icon="Assets/nextrdp.ico" Height="800" Width="1280"
+        Title="NextRDP" Height="800" Width="1280"
         MinHeight="480" MinWidth="840" WindowStartupLocation="CenterScreen"
         PreviewKeyDown="Window_PreviewKeyDown" SizeChanged="Window_SizeChanged">
+    <Window.Resources>
+        <DataTemplate x:Key="ManagedScopeItemTemplate">
+            <TextBlock Text="{Binding Name}" Foreground="{DynamicResource ComboBoxText}" TextTrimming="CharacterEllipsis"/>
+        </DataTemplate>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -87,9 +92,11 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button Content="Managed sign-in" Click="ManagedSignIn_Click" Style="{StaticResource CompactButtonStyle}" ToolTip="Sign in to a managed workspace" AutomationProperties.Name="Sign in to managed workspace"/>
                     <ComboBox Width="125" Margin="3,0" ItemsSource="{Binding ManagedOrganizations}" SelectedItem="{Binding SelectedManagedOrganization}"
-                              DisplayMemberPath="Name" SelectionChanged="ManagedOrganization_SelectionChanged" ToolTip="Managed organization" AutomationProperties.Name="Managed organization"/>
+                              ItemTemplate="{StaticResource ManagedScopeItemTemplate}" TextSearch.TextPath="Name"
+                              SelectionChanged="ManagedOrganization_SelectionChanged" ToolTip="Managed organization" AutomationProperties.Name="Managed organization"/>
                     <ComboBox Width="125" Margin="3,0" ItemsSource="{Binding ManagedWorkspaces}" SelectedItem="{Binding SelectedManagedWorkspace}"
-                              DisplayMemberPath="Name" SelectionChanged="ManagedWorkspace_SelectionChanged" ToolTip="Managed workspace" AutomationProperties.Name="Managed workspace"/>
+                              ItemTemplate="{StaticResource ManagedScopeItemTemplate}" TextSearch.TextPath="Name"
+                              SelectionChanged="ManagedWorkspace_SelectionChanged" ToolTip="Managed workspace" AutomationProperties.Name="Managed workspace"/>
                     <Button Click="ManagedSync_Click" IsEnabled="{Binding CanSynchronizeManaged}" Style="{StaticResource CompactButtonStyle}" ToolTip="Synchronize managed workspace" AutomationProperties.Name="Synchronize managed workspace">
                         <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE895;" Style="{StaticResource ToolbarGlyphStyle}"/><TextBlock Text="Sync" Style="{StaticResource ToolbarLabelStyle}"/></StackPanel>
                     </Button>

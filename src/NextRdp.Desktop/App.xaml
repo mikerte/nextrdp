@@ -33,7 +33,12 @@
         <local:HostPortConverter x:Key="HostPortConverter" />
         <local:ConnectionOperationalDetailsConverter x:Key="ConnectionOperationalDetailsConverter" />
         <local:ManagedConnectionVisibilityConverter x:Key="ManagedConnectionVisibilityConverter" />
-        <Style TargetType="Window"><Setter Property="Background" Value="{DynamicResource AppBackground}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/><Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/></Style>
+        <Style TargetType="Window">
+            <Setter Property="Icon" Value="pack://application:,,,/NextRdp.Desktop;component/Assets/nextrdp-logo.png"/>
+            <Setter Property="Background" Value="{DynamicResource AppBackground}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+        </Style>
         <Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource PrimaryText}"/></Style>
         <Style TargetType="Menu">
             <Setter Property="Background" Value="{DynamicResource TopBarBackground}"/>
