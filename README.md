@@ -15,9 +15,9 @@ NextRDP is a native Windows remote-desktop manager with a secure local inventory
 | --- | --- | --- |
 | Windows desktop | Working early-access MVP | Local connection inventory and direct RDP sessions on Windows 11 x64 |
 | Self-hosted management | Functional preview | Evaluation of shared inventory, policy, synchronization, administration, and automation |
-| Production release | Not available | Production signing, external identity/infrastructure validation, and release readiness remain outstanding |
+| Production release | Not available | The source-only `0.2.0-preview.1` checkpoint has no production-signed binaries; external identity/infrastructure validation and release readiness remain outstanding |
 
-There are no official production binaries or GitHub Releases yet. Test-signed packages created from source are for local evaluation only.
+The [`0.2.0-preview.1` GitHub pre-release](https://github.com/mikerte/nextrdp/releases/tag/v0.2.0-preview.1) is source-only. There are no official production binaries. Test-signed packages created from source are for local evaluation only.
 
 ## What works
 
@@ -123,12 +123,10 @@ The [development guide](docs/development.md) explains the solution layout, gener
 ## Build evaluation packages
 
 ```powershell
-.\scripts\publish-windows.ps1 -Configuration Release
-.\scripts\smoke-unpackaged.ps1
-.\scripts\package-msix.ps1
+.\scripts\build-preview-release.ps1
 ```
 
-Outputs are written under ignored `artifacts/` directories. `package-msix.ps1` creates a locally test-signed x64 package with identity `NextRDP.Client`; it does not install the package or modify machine trust.
+The command runs the full Phase 1/2 release gate and writes a self-contained x64 ZIP, locally test-signed `NextRDP.Client` MSIX, release manifest, and SHA-256 hashes under `artifacts\release\v0.2.0-preview.1\`. It does not install the package or modify machine trust.
 
 Development builds created before the public-source launch used identity `NextRDP.Hackathon`. Uninstall that old test package before installing `NextRDP.Client`; Windows treats them as separate applications.
 
@@ -149,6 +147,7 @@ This is not a production distribution path. A public binary release requires a p
 - [Phase 2 architecture](docs/architecture/phase2.md)
 - [Threat model](docs/threat-model.md)
 - [Roadmap](docs/roadmap.md)
+- [Preview release notes](docs/releases/v0.2.0-preview.1.md)
 - [Feature catalog](docs/reference/feature-catalog.csv)
 - [Validation evidence](docs/validation/)
 

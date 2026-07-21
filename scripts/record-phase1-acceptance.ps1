@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$ResultsPath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'samples\phase1-acceptance-results.template.json'),
-    [string]$PackagePath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'artifacts\msix\NextRDP-0.1.0.0-x64.msix'),
+    [string]$PackagePath = '',
     [string]$OutputDirectory = (Join-Path (Split-Path -Parent $PSScriptRoot) 'artifacts\acceptance'),
     [string]$InstallEvidencePath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'artifacts\acceptance\msix-install-smoke.json'),
     [string]$CertificationEvidencePath = (Join-Path (Split-Path -Parent $PSScriptRoot) 'artifacts\certification\NextRDP-WACK-evidence.json'),
@@ -10,6 +10,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'release-metadata.ps1')
+$release = Get-NextRdpReleaseMetadata
+if ([string]::IsNullOrWhiteSpace($PackagePath)) {
+    $PackagePath = Join-Path (Split-Path -Parent $PSScriptRoot) "artifacts\msix\NextRDP-$($release.MsixVersion)-x64.msix"
+}
 . (Join-Path $PSScriptRoot 'phase1-platform.ps1')
 
 function ConvertTo-EvidenceTimestamp([object]$Value, [string]$Label) {

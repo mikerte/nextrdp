@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <NextRdpProductVersion>0.2.0</NextRdpProductVersion>
+    <NextRdpReleaseVersion>0.2.0-preview.1</NextRdpReleaseVersion>
+    <NextRdpMsixVersion>0.2.0.0</NextRdpMsixVersion>
+    <NextRdpReleaseTag>v0.2.0-preview.1</NextRdpReleaseTag>
+    <NextRdpReleaseChannel>preview</NextRdpReleaseChannel>
+    <NextRdpPackageIdentity>NextRDP.Client</NextRdpPackageIdentity>
+    <NextRdpPackagePublisher>CN=NextRDP Development</NextRdpPackagePublisher>
+
+    <Version>$(NextRdpReleaseVersion)</Version>
+    <VersionPrefix>$(NextRdpProductVersion)</VersionPrefix>
+    <VersionSuffix>preview.1</VersionSuffix>
+    <AssemblyVersion>$(NextRdpMsixVersion)</AssemblyVersion>
+    <FileVersion>$(NextRdpMsixVersion)</FileVersion>
+    <InformationalVersion>$(NextRdpReleaseVersion)</InformationalVersion>
+  </PropertyGroup>
+</Project>

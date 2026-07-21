@@ -7,6 +7,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
+& (Join-Path $PSScriptRoot 'test-release-metadata.ps1')
+
 foreach ($scriptFile in Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.ps1' -File) {
     $tokens = $null
     $parseErrors = $null

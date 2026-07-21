@@ -60,4 +60,4 @@ jobs:
         shell: pwsh
         run: |
           .\scripts\publish-windows.ps1 -Configuration Release
-          .\scripts\package-msix.ps1 -Version 0.1.0.0
+          .\scripts\package-msix.ps1

@@ -44,7 +44,9 @@ try {
     $document.privacyBoundaryAcknowledged = 'true'
     Assert-Rejected $document 'non-boolean-acknowledgement'
 
-    $packagePath = Join-Path $projectRoot 'artifacts\msix\NextRDP-0.1.0.0-x64.msix'
+    . (Join-Path $PSScriptRoot 'release-metadata.ps1')
+    $release = Get-NextRdpReleaseMetadata -ProjectRoot $projectRoot
+    $packagePath = Join-Path $projectRoot "artifacts\msix\NextRDP-$($release.MsixVersion)-x64.msix"
     if (Test-Path -LiteralPath $packagePath -PathType Leaf) {
         $document = Copy-TemplateDocument
         $document.privacyBoundaryAcknowledged = $true

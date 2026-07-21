@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$Version = '0.1.0.0',
+    [string]$Version = '',
     [switch]$PreflightOnly,
     [switch]$ManualAcceptance,
     [ValidateRange(5, 180)][int]$ManualTimeoutMinutes = 60
@@ -8,10 +8,13 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'release-metadata.ps1')
+$release = Get-NextRdpReleaseMetadata -ProjectRoot $root
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $release.MsixVersion }
 . (Join-Path $PSScriptRoot 'phase1-platform.ps1')
 $packagePath = Join-Path $root "artifacts\msix\NextRDP-$Version-x64.msix"
 $certificatePath = Join-Path $root 'artifacts\msix\NextRDP-TestSigning.cer'
-$packageName = 'NextRDP.Client'
+$packageName = $release.PackageIdentity
 $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
 $isAdministrator = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $operatingSystem = Get-CimInstance -ClassName Win32_OperatingSystem
@@ -22,7 +25,7 @@ if (-not (Test-NextRdpPhaseOneClientPlatform -ProductType ([int]$operatingSystem
     throw 'MSIX acceptance requires a Windows 11 x64 client workstation (build 22000 or newer); Windows Server does not satisfy the Phase 1 release target.'
 }
 $signature = Get-AuthenticodeSignature -LiteralPath $packagePath
-if ($signature.Status -ne 'Valid') { throw "The MSIX signature is not valid: $($signature.StatusMessage)" }
+if (-not (Test-NextRdpEvaluationSignature $signature)) { throw "The MSIX signature is not valid: $($signature.StatusMessage)" }
 $certificate = [Security.Cryptography.X509Certificates.X509Certificate2]::new($certificatePath)
 if ($signature.SignerCertificate.Thumbprint -ne $certificate.Thumbprint) { throw 'The exported test certificate does not match the MSIX signer.' }
 $packageHash = Get-FileHash -LiteralPath $packagePath -Algorithm SHA256
@@ -43,6 +46,7 @@ finally
 
 $identity = $manifest.Package.Identity
 if ($identity.Name -ne $packageName) { throw "Unexpected package identity '$($identity.Name)'; expected '$packageName'." }
+if ($identity.Publisher -ne $release.PackagePublisher) { throw "Unexpected package publisher '$($identity.Publisher)'; expected '$($release.PackagePublisher)'." }
 if ($identity.ProcessorArchitecture -ne 'x64') { throw "Unexpected package architecture '$($identity.ProcessorArchitecture)'; expected 'x64'." }
 if ($identity.Version -ne $Version) { throw "Unexpected package version '$($identity.Version)'; expected '$Version'." }
 $existingPackage = @(Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue)
@@ -53,7 +57,7 @@ $hasExistingUserData = (Test-Path -LiteralPath $unpackagedDataPath) -or $package
 
 if ($PreflightOnly)
 {
-    Write-Host "MSIX package preflight passed for Windows $($operatingSystem.Version) x64, package $($identity.Name) $($identity.Version) $($identity.ProcessorArchitecture), signature $($signature.Status). Elevated execution available: $isAdministrator; clean user data state: $(-not $hasExistingUserData)."
+    Write-Host "MSIX package preflight passed for Windows $($operatingSystem.Version) x64, package $($identity.Name) $($identity.Version) $($identity.ProcessorArchitecture), acceptable evaluation signature $($signature.Status). Elevated execution available: $isAdministrator; clean user data state: $(-not $hasExistingUserData)."
     if ($hasExistingUserData) { Write-Host 'This account contains existing NextRDP data. The mutating acceptance run will refuse to proceed; use a clean Windows 11 x64 test user.' }
     if (-not $isAdministrator) { Write-Host 'Run this script from an elevated PowerShell session on the clean Windows 11 x64 test machine to perform install, launch, uninstall, and trust cleanup.' }
     return
