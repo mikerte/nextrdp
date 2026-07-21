@@ -104,7 +104,7 @@ internal static class CliApplication
                 workspace = args.RequireGuid("workspace");
                 var host = args.RequireValue("host"); var port = args.IntValue("port", 443);
                 method = HttpMethod.Post; path = $"api/v1/organizations/{organization:D}/workspaces/{workspace:D}/gateway/diagnostics";
-                request = new { host, port, requireTls = !args.Flag("no-tls"), expectedServerName = host };
+                request = new { host, port, expectedServerName = host };
                 break;
             case "import-preview":
                 organization = args.RequireGuid("organization");
@@ -189,7 +189,7 @@ internal sealed class CliArguments
             var current = args[index];
             if (!current.StartsWith("--", StringComparison.Ordinal)) { if (string.IsNullOrEmpty(result.Command)) result.Command = current.ToLowerInvariant(); else throw new CliException(2, "unexpected_argument", $"Unexpected argument '{current}'."); continue; }
             var name = current[2..].ToLowerInvariant();
-            if (name is "help" or "h" or "no-tls" or "interactive") { result.options[name] = null; continue; }
+            if (name is "help" or "h" or "interactive") { result.options[name] = null; continue; }
             if (++index >= args.Length || args[index].StartsWith("--", StringComparison.Ordinal)) throw new CliException(2, "missing_option_value", $"Option --{name} requires a value.");
             result.options[name] = args[index];
         }

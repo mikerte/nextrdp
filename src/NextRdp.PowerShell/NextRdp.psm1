@@ -80,8 +80,8 @@ function Invoke-NextRdpBulkProvision {
 }
 
 function Test-NextRdpGateway {
-    [CmdletBinding()] param([Parameter(Mandatory)][Guid]$OrganizationId, [Parameter(Mandatory)][Guid]$WorkspaceId, [Parameter(Mandatory)][string]$HostName, [int]$Port = 443, [switch]$SkipTls)
-    Invoke-NextRdpRequest -Method Post -Path "api/v1/organizations/$OrganizationId/workspaces/$WorkspaceId/gateway/diagnostics" -Body @{ host = $HostName; port = $Port; requireTls = -not $SkipTls; expectedServerName = $HostName }
+    [CmdletBinding()] param([Parameter(Mandatory)][Guid]$OrganizationId, [Parameter(Mandatory)][Guid]$WorkspaceId, [Parameter(Mandatory)][string]$HostName, [int]$Port = 443)
+    Invoke-NextRdpRequest -Method Post -Path "api/v1/organizations/$OrganizationId/workspaces/$WorkspaceId/gateway/diagnostics" -Body @{ host = $HostName; port = $Port; expectedServerName = $HostName }
 }
 
 Export-ModuleMember -Function Connect-NextRdpControlPlane,Disconnect-NextRdpControlPlane,Get-NextRdpOrganization,Get-NextRdpWorkspace,Get-NextRdpConnection,Sync-NextRdpWorkspace,Export-NextRdpInventory,Invoke-NextRdpBulkProvision,Test-NextRdpGateway

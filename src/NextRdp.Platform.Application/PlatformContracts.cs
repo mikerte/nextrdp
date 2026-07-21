@@ -229,5 +229,5 @@ public sealed record BulkConnectionEditRequest(IReadOnlyList<Guid> ConnectionIds
 public sealed record BulkConnectPreviewRequest(IReadOnlyList<Guid> ConnectionIds);
 public sealed record BulkConnectPreviewResult(IReadOnlyList<Guid> AllowedConnectionIds, IReadOnlyList<Guid> DeniedConnectionIds, int MaximumConnections, IReadOnlyList<string> Warnings);
 
-public sealed record GatewayDiagnosticRequest(string Host, int Port, bool RequireTls, string? ExpectedServerName);
+public sealed record GatewayDiagnosticRequest(string Host, int Port, string? ExpectedServerName);
 public sealed record GatewayDiagnosticResult(bool DnsSucceeded, int AddressCount, bool TcpSucceeded, bool TlsSucceeded, string Outcome, long DurationMilliseconds, DateTimeOffset TestedAtUtc);
