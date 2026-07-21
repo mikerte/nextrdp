@@ -1,0 +1,39 @@
+{
+  "name": "@nextrdp/admin",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Administration console for the self-hosted NextRDP management platform.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikerte/nextrdp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mikerte/nextrdp/issues"
+  },
+  "homepage": "https://github.com/mikerte/nextrdp#readme",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "check": "npm run build && npm run test"
+  },
+  "dependencies": {
+    "@fluentui/react-components": "9.74.4",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/node": "24.10.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.3",
+    "jsdom": "27.4.0",
+    "typescript": "5.9.3",
+    "vite": "8.1.5",
+    "vitest": "4.1.10"
+  }
+}

@@ -1,0 +1,80 @@
+<Window x:Class="NextRdp.Desktop.ConnectionEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Connection" Icon="Assets/nextrdp.ico" Width="680" Height="740"
+        MinWidth="500" MinHeight="480" WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False" ResizeMode="CanResizeWithGrip"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource PrimaryText}">
+    <Grid Margin="22">
+        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" PanningMode="VerticalFirst">
+            <StackPanel Margin="0,0,12,0">
+                <TextBlock Text="Connection details" FontSize="22" FontWeight="SemiBold"/>
+                <TextBlock Text="NextRDP stores connection metadata only. Windows requests the password when the session opens."
+                           Foreground="{DynamicResource SecondaryText}" TextWrapping="Wrap" Margin="0,6,0,20"/>
+
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Connection name" FontWeight="SemiBold"/>
+                    <TextBox x:Name="NameBox" Grid.Row="1" Margin="0,5,0,14" AutomationProperties.Name="Connection name"/>
+                    <TextBlock Grid.Column="2" Text="Environment" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="EnvironmentBox" Grid.Row="1" Grid.Column="2" Margin="0,5,0,14" Padding="8,6" AutomationProperties.Name="Environment">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="{DynamicResource ComboBoxText}"/></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <TextBlock Grid.Row="2" Text="Host or IP address" FontWeight="SemiBold"/>
+                    <TextBox x:Name="HostBox" Grid.Row="3" Margin="0,5,0,14" AutomationProperties.Name="Host or IP address"/>
+                    <TextBlock Grid.Row="2" Grid.Column="2" Text="Port" FontWeight="SemiBold"/>
+                    <TextBox x:Name="PortBox" Grid.Row="3" Grid.Column="2" Margin="0,5,0,14" AutomationProperties.Name="RDP port"/>
+
+                    <TextBlock Grid.Row="4" Text="Username hint (optional)" FontWeight="SemiBold"/>
+                    <TextBox x:Name="UsernameBox" Grid.Row="5" Margin="0,5,0,14" AutomationProperties.Name="Username hint"/>
+                    <TextBlock Grid.Row="4" Grid.Column="2" Text="Folder" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="FolderBox" Grid.Row="5" Grid.Column="2" Margin="0,5,0,14" Padding="8,6" AutomationProperties.Name="Connection folder">
+                        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding DisplayName}" Foreground="{DynamicResource ComboBoxText}"/></DataTemplate></ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <TextBlock Grid.Row="6" Text="Tags (comma separated)" FontWeight="SemiBold"/>
+                    <TextBox x:Name="TagsBox" Grid.Row="7" Margin="0,5,0,14" AutomationProperties.Name="Connection tags"/>
+                    <CheckBox x:Name="FavoriteBox" Grid.Row="7" Grid.Column="2" Content="Favorite connection" Margin="0,11,0,14"
+                              VerticalAlignment="Top" AutomationProperties.Name="Favorite connection"/>
+                </Grid>
+
+                <TextBlock Text="Notes and runbook" FontWeight="SemiBold"/>
+                <TextBox x:Name="NotesBox" Height="90" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                         Margin="0,5,0,18" AutomationProperties.Name="Connection notes and runbook"/>
+
+                <Border Background="{DynamicResource InsetBackground}" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="RDP session settings" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+                        <WrapPanel>
+                            <CheckBox x:Name="NlaBox" Content="Require NLA" Width="190" Margin="0,4" AutomationProperties.Name="Require Network Level Authentication"/>
+                            <CheckBox x:Name="SmartSizingBox" Content="Smart sizing" Width="190" Margin="0,4" AutomationProperties.Name="Smart sizing"/>
+                            <CheckBox x:Name="ClipboardBox" Content="Clipboard" Width="190" Margin="0,4" AutomationProperties.Name="Redirect clipboard"/>
+                            <CheckBox x:Name="DrivesBox" Content="Drives" Width="190" Margin="0,4" AutomationProperties.Name="Redirect drives"/>
+                            <CheckBox x:Name="PrintersBox" Content="Printers" Width="190" Margin="0,4" AutomationProperties.Name="Redirect printers"/>
+                            <CheckBox x:Name="AudioBox" Content="Audio playback" Width="190" Margin="0,4" AutomationProperties.Name="Redirect audio playback"/>
+                            <CheckBox x:Name="ProductionWatermarkBox" Content="Production watermark" Width="190" Margin="0,4"
+                                      ToolTip="Show a watermark when this connection is classified as Production" AutomationProperties.Name="Show Production session watermark"/>
+                        </WrapPanel>
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <StackPanel><TextBlock Text="Reconnect attempts"/><TextBox x:Name="ReconnectBox" Margin="0,5,0,0" AutomationProperties.Name="Automatic reconnect attempt limit"/></StackPanel>
+                            <StackPanel Grid.Column="2"><TextBlock Text="Colour depth"/><ComboBox x:Name="ColorDepthBox" Margin="0,5,0,0" Padding="8,6" AutomationProperties.Name="RDP colour depth"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="{DynamicResource ComboBoxText}"/></DataTemplate></ComboBox.ItemTemplate></ComboBox></StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <Button Content="_Cancel" IsCancel="True" MinWidth="90"/>
+            <Button Content="_Save" Click="Save_Click" Style="{StaticResource AccentButtonStyle}" MinWidth="110" IsDefault="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

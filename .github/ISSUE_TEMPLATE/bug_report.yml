@@ -1,0 +1,50 @@
+name: Bug report
+description: Report a reproducible NextRDP problem without including sensitive environment data.
+title: '[Bug]: '
+labels: ['bug', 'needs-triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include passwords, tokens, certificates, private hostnames/IP addresses, production inventories, or unredacted screenshots/logs. Report security issues privately through the Security tab.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Commit SHA, source date, or package version.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Windows edition/build and whether the app is packaged or unpackaged. Keep target identities anonymous.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Use disposable data and remove identifying details.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include only redacted error categories and logs.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed credentials, private targets, personal data, tokens, certificates, and other sensitive information.
+          required: true

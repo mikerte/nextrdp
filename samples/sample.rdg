@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RDCMan programVersion="2.93" schemaVersion="3">
+  <file>
+    <properties><name>NextRDP safe sample</name></properties>
+    <group>
+      <properties><name>Lab</name></properties>
+      <server>
+        <properties><name>rdp.example.invalid</name><displayName>Example lab host</displayName></properties>
+      </server>
+    </group>
+  </file>
+</RDCMan>

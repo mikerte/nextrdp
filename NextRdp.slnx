@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NextRdp.Core/NextRdp.Core.csproj" />
+    <Project Path="src/NextRdp.Desktop/NextRdp.Desktop.csproj" />
+    <Project Path="src/NextRdp.Infrastructure/NextRdp.Infrastructure.csproj" />
+    <Project Path="src/NextRdp.Platform.Domain/NextRdp.Platform.Domain.csproj" />
+    <Project Path="src/NextRdp.Platform.Application/NextRdp.Platform.Application.csproj" />
+    <Project Path="src/NextRdp.Platform.Client/NextRdp.Platform.Client.csproj" />
+    <Project Path="src/NextRdp.Platform.Infrastructure/NextRdp.Platform.Infrastructure.csproj" />
+    <Project Path="src/NextRdp.ControlPlane/NextRdp.ControlPlane.csproj" />
+    <Project Path="src/NextRdp.Cli/NextRdp.Cli.csproj" />
+    <Project Path="src/NextRdp.RdpHost/NextRdp.RdpHost.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NextRdp.Core.Tests/NextRdp.Core.Tests.csproj" />
+    <Project Path="tests/NextRdp.ControlPlane.Tests/NextRdp.ControlPlane.Tests.csproj" />
+    <Project Path="tests/NextRdp.Desktop.Tests/NextRdp.Desktop.Tests.csproj" />
+    <Project Path="tests/NextRdp.Infrastructure.Tests/NextRdp.Infrastructure.Tests.csproj" />
+    <Project Path="tests/NextRdp.Platform.Application.Tests/NextRdp.Platform.Application.Tests.csproj" />
+    <Project Path="tests/NextRdp.Platform.Infrastructure.Tests/NextRdp.Platform.Infrastructure.Tests.csproj" />
+    <Project Path="tests/NextRdp.Platform.Client.Tests/NextRdp.Platform.Client.Tests.csproj" />
+    <Project Path="tests/NextRdp.RdpHost.Tests/NextRdp.RdpHost.Tests.csproj" />
+  </Folder>
+</Solution>

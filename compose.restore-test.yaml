@@ -1,0 +1,7 @@
+services:
+  control-plane:
+    ports: !override
+      - "127.0.0.1:5180:8080"
+  admin:
+    ports: !override
+      - "127.0.0.1:5190:8080"

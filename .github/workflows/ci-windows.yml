@@ -1,0 +1,63 @@
+name: Windows validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Windows validation
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.x
+          cache: npm
+          cache-dependency-path: src/NextRdp.Admin/package-lock.json
+
+      - name: Restore administration-console dependencies
+        working-directory: src/NextRdp.Admin
+        run: npm ci
+
+      - name: Check Developer Certificate of Origin
+        shell: pwsh
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: .\scripts\check-dco.ps1 -BaseSha $env:BASE_SHA -HeadSha $env:HEAD_SHA
+
+      - name: Check public source boundary
+        shell: pwsh
+        run: .\scripts\check-public-tree.ps1
+
+      - name: Run Phase 2 release validation
+        shell: pwsh
+        run: .\scripts\check-phase2.ps1 -Configuration Release
+
+      - name: Build and verify test-signed MSIX
+        shell: pwsh
+        run: |
+          .\scripts\publish-windows.ps1 -Configuration Release
+          .\scripts\package-msix.ps1 -Version 0.1.0.0
