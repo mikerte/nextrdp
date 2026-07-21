@@ -1,11 +1,11 @@
-FROM node:24.18-alpine AS build
+FROM node:26.5-alpine AS build
 WORKDIR /app
 COPY src/NextRdp.Admin/package*.json ./
 RUN npm ci
 COPY src/NextRdp.Admin/ ./
 RUN npm run build
 
-FROM nginx:1.29.4-alpine
+FROM nginx:1.31.3-alpine
 COPY src/NextRdp.Admin/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY LICENSE NOTICE TRADEMARKS.md THIRD-PARTY-NOTICES.md /licenses/
