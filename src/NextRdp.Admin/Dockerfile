@@ -6,7 +6,7 @@ COPY src/NextRdp.Admin/ ./
 COPY src/NextRdp.Desktop/Assets/nextrdp-logo.png /NextRdp.Desktop/Assets/nextrdp-logo.png
 RUN npm run build
 
-FROM nginx:1.29.4-alpine
+FROM nginx:1.31.3-alpine
 COPY src/NextRdp.Admin/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY LICENSE NOTICE TRADEMARKS.md THIRD-PARTY-NOTICES.md /licenses/
