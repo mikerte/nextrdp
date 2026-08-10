@@ -1,4 +1,4 @@
-FROM node:24.18-alpine AS build
+FROM node:24.19-alpine AS build
 WORKDIR /app
 COPY src/NextRdp.Admin/package*.json ./
 RUN npm ci
